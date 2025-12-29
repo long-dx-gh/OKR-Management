@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Connection Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+    .result { margin: 10px 0; padding: 10px; background: #2a2a2a; border-left: 3px solid #00ff00; }
+    .error { border-left-color: #ff0000; color: #ff6666; }
+    .success { border-left-color: #00ff00; }
+    .warning { border-left-color: #ffaa00; color: #ffcc66; }
+    h1 { color: #00ff00; }
+    button { background: #00ff00; color: #000; padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Supabase Connection Test</h1>
+  <button onclick="runTests()">Run Tests</button>
+  <div id="results"></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+    const SUPABASE_URL = 'https://tlgzztlymohzxrrybpuu.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsZ3p6dGx5bW9oenhycnlicHV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ0MTYsImV4cCI6MjA4MjU2MDQxNn0.1fL-vx2Vsi-s63tTSRcmdlMPR8e1yzbfZGVXtGcpIlY'
+
+    window.runTests = async function() {
+      const results = document.getElementById('results')
+      results.innerHTML = '<div class="result">🔄 Running tests...</div>'
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+      let html = ''
+
+      // Test 1: Client initialization
+      html += '<div class="result success">✅ Test 1: Supabase client initialized</div>'
+
+      // Test 2: Check session
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          html += `<div class="result success">✅ Test 2: Session active (${session.user.email})</div>`
+        } else {
+          html += '<div class="result warning">⚠️  Test 2: No active session (not logged in)</div>'
+        }
+      } catch (err) {
+        html += `<div class="result error">❌ Test 2: ${err.message}</div>`
+      }
+
+      // Test 3: Check tables
+      try {
+        const { data, error } = await supabase.from('profiles').select('count').limit(1)
+        if (error) {
+          if (error.code === 'PGRST116') {
+            html += '<div class="result error">❌ Test 3: Tables not created! Run supabase-schema.sql</div>'
+            html += `<div class="result error">Error: ${error.message}</div>`
+          } else if (error.code === '42501') {
+            html += '<div class="result error">❌ Test 3: RLS blocking access! Check policies</div>'
+          } else {
+            html += `<div class="result error">❌ Test 3: ${error.message} (code: ${error.code})</div>`
+          }
+        } else {
+          html += '<div class="result success">✅ Test 3: Tables exist and accessible</div>'
+        }
+      } catch (err) {
+        html += `<div class="result error">❌ Test 3: ${err.message}</div>`
+      }
+
+      // Test 4: Try to fetch objectives
+      try {
+        const { data, error } = await supabase.from('objectives').select('*').limit(5)
+        if (error) {
+          html += `<div class="result error">❌ Test 4: Cannot fetch objectives</div>`
+          html += `<div class="result error">Error: ${error.message}</div>`
+          html += `<div class="result error">Code: ${error.code}</div>`
+          html += `<div class="result error">Details: ${JSON.stringify(error.details)}</div>`
+        } else {
+          html += `<div class="result success">✅ Test 4: Successfully fetched ${data.length} objectives</div>`
+          if (data.length === 0) {
+            html += '<div class="result warning">⚠️  Database is empty. Create your first objective!</div>'
+          }
+        }
+      } catch (err) {
+        html += `<div class="result error">❌ Test 4: ${err.message}</div>`
+      }
+
+      // Test 5: Check user
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (user) {
+          html += `<div class="result success">✅ Test 5: Logged in as ${user.email}</div>`
+        } else {
+          html += '<div class="result warning">⚠️  Test 5: Not logged in</div>'
+        }
+      } catch (err) {
+        html += `<div class="result error">❌ Test 5: ${err.message}</div>`
+      }
+
+      html += '<hr><div class="result"><strong>Test completed!</strong> See results above.</div>'
+      results.innerHTML = html
+    }
+  </script>
+</body>
+</html>

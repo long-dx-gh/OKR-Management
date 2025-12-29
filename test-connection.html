@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Connection Test - OKR Platform</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .header p { opacity: 0.9; }
+    .content { padding: 2rem; }
+    .test-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .test-section h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    .status.pending { background: #fef3c7; color: #92400e; }
+    .status.success { background: #dcfce7; color: #166534; }
+    .status.error { background: #fee2e2; color: #991b1b; }
+    .status.warning { background: #fed7aa; color: #9a3412; }
+    .result {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 0.75rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      border-left: 4px solid #cbd5e1;
+    }
+    .result.success { border-left-color: #22c55e; }
+    .result.error { border-left-color: #ef4444; }
+    .result.warning { border-left-color: #f97316; }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(0); }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .loading {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid #f3f4f6;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .icon { font-size: 1.5rem; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .summary-card {
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .summary-card.success { background: #dcfce7; color: #166534; }
+    .summary-card.error { background: #fee2e2; color: #991b1b; }
+    .summary-card.warning { background: #fed7aa; color: #9a3412; }
+    .summary-card h3 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .summary-card p { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Supabase Connection Test</h1>
+      <p>OKR Platform - Comprehensive Diagnostics</p>
+    </div>
+    
+    <div class="content">
+      <div class="test-section">
+        <h2>
+          <span class="icon">⚙️</span>
+          Test 1: Environment Configuration
+          <span id="status-1" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-1" class="result"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="icon">🔌</span>
+          Test 2: Supabase Client Initialization
+          <span id="status-2" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-2" class="result"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="icon">🔐</span>
+          Test 3: Authentication Session
+          <span id="status-3" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-3" class="result"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="icon">🗄️</span>
+          Test 4: Database Tables Check
+          <span id="status-4" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-4" class="result"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="icon">👤</span>
+          Test 5: User Profile Check
+          <span id="status-5" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-5" class="result"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="icon">🎯</span>
+          Test 6: Fetch Objectives
+          <span id="status-6" class="status pending">PENDING</span>
+        </h2>
+        <div id="result-6" class="result"></div>
+      </div>
+
+      <button id="runTests" onclick="runAllTests()">
+        <span id="btnText">Run All Tests</span>
+      </button>
+
+      <div class="summary" id="summary" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://tlgzztlymohzxrrybpuu.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsZ3p6dGx5bW9oenhycnlicHV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ0MTYsImV4cCI6MjA4MjU2MDQxNn0.1fL-vx2Vsi-s63tTSRcmdlMPR8e1yzbfZGVXtGcpIlY';
+
+    let supabase;
+    let testResults = {
+      passed: 0,
+      failed: 0,
+      warnings: 0
+    };
+
+    function updateStatus(testNum, status, message, type = 'info') {
+      const statusEl = document.getElementById(`status-${testNum}`);
+      const resultEl = document.getElementById(`result-${testNum}`);
+      
+      statusEl.className = `status ${status}`;
+      statusEl.textContent = status.toUpperCase();
+      
+      resultEl.className = `result ${type}`;
+      resultEl.textContent = message;
+
+      if (status === 'success') testResults.passed++;
+      else if (status === 'error') testResults.failed++;
+      else if (status === 'warning') testResults.warnings++;
+    }
+
+    async function test1_checkEnv() {
+      try {
+        const checks = {
+          'URL Format': SUPABASE_URL.startsWith('https://') && SUPABASE_URL.includes('.supabase.co'),
+          'URL Not Empty': SUPABASE_URL.length > 0,
+          'Key Format': SUPABASE_ANON_KEY.startsWith('eyJ'),
+          'Key Not Empty': SUPABASE_ANON_KEY.length > 100,
+        };
+
+        const allPassed = Object.values(checks).every(v => v);
+        
+        let message = `URL: ${SUPABASE_URL}\n`;
+        message += `Key: ${SUPABASE_ANON_KEY.substring(0, 30)}...\n\n`;
+        message += 'Validation:\n';
+        Object.entries(checks).forEach(([key, value]) => {
+          message += `  ${value ? '✅' : '❌'} ${key}\n`;
+        });
+
+        if (allPassed) {
+          updateStatus(1, 'success', message, 'success');
+        } else {
+          updateStatus(1, 'error', message + '\n❌ Environment configuration is invalid!', 'error');
+        }
+      } catch (error) {
+        updateStatus(1, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function test2_initClient() {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        if (supabase) {
+          updateStatus(2, 'success', `✅ Supabase client initialized successfully\n\nClient object: ${typeof supabase}\nAuth available: ${!!supabase.auth}\nFrom available: ${!!supabase.from}`, 'success');
+        } else {
+          updateStatus(2, 'error', '❌ Failed to create Supabase client', 'error');
+        }
+      } catch (error) {
+        updateStatus(2, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function test3_checkAuth() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          updateStatus(3, 'error', `Error: ${error.message}`, 'error');
+          return;
+        }
+
+        if (session) {
+          const user = session.user;
+          let message = `✅ User is authenticated!\n\n`;
+          message += `User ID: ${user.id}\n`;
+          message += `Email: ${user.email}\n`;
+          message += `Created: ${new Date(user.created_at).toLocaleString()}\n`;
+          message += `Session expires: ${new Date(session.expires_at * 1000).toLocaleString()}`;
+          
+          updateStatus(3, 'success', message, 'success');
+        } else {
+          updateStatus(3, 'warning', `⚠️ No active session found\n\nYou need to log in through the OKR Platform app first.\nGo to http://localhost:5173 and sign in.`, 'warning');
+        }
+      } catch (error) {
+        updateStatus(3, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function test4_checkTables() {
+      try {
+        const tables = ['profiles', 'objectives', 'key_results', 'comments'];
+        let message = 'Checking database tables:\n\n';
+        let allExist = true;
+
+        for (const table of tables) {
+          try {
+            const { data, error } = await supabase.from(table).select('count', { count: 'exact', head: true });
+            
+            if (error) {
+              if (error.code === '42P01') {
+                message += `❌ ${table}: Table does not exist\n`;
+                allExist = false;
+              } else if (error.code === '42501') {
+                message += `✅ ${table}: Exists (RLS policy blocking)\n`;
+              } else {
+                message += `⚠️ ${table}: ${error.message}\n`;
+                allExist = false;
+              }
+            } else {
+              message += `✅ ${table}: Exists and accessible\n`;
+            }
+          } catch (err) {
+            message += `❌ ${table}: ${err.message}\n`;
+            allExist = false;
+          }
+        }
+
+        if (!allExist) {
+          message += '\n❌ Some tables are missing!\n';
+          message += '\nFix: Run the SQL schema in Supabase Dashboard:\n';
+          message += '1. Go to SQL Editor\n';
+          message += '2. Paste content from supabase-schema.sql\n';
+          message += '3. Click "Run"';
+          updateStatus(4, 'error', message, 'error');
+        } else {
+          updateStatus(4, 'success', message, 'success');
+        }
+      } catch (error) {
+        updateStatus(4, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function test5_checkProfile() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          updateStatus(5, 'warning', '⚠️ Cannot check profile - not authenticated', 'warning');
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          if (error.code === 'PGRST116') {
+            let message = `❌ Profile not found for user ${session.user.email}\n\n`;
+            message += 'This usually happens if the profile trigger failed.\n\n';
+            message += 'Fix: Run this SQL in Supabase Dashboard:\n\n';
+            message += `INSERT INTO profiles (id, email, full_name)\n`;
+            message += `VALUES ('${session.user.id}', '${session.user.email}', '${session.user.email.split('@')[0]}')\n`;
+            message += `ON CONFLICT (id) DO NOTHING;`;
+            updateStatus(5, 'error', message, 'error');
+          } else {
+            updateStatus(5, 'error', `Error: ${error.message}`, 'error');
+          }
+          return;
+        }
+
+        let message = `✅ Profile exists!\n\n`;
+        message += `ID: ${profile.id}\n`;
+        message += `Email: ${profile.email}\n`;
+        message += `Name: ${profile.full_name || 'Not set'}\n`;
+        message += `Avatar: ${profile.avatar_url || 'Not set'}\n`;
+        message += `Created: ${new Date(profile.created_at).toLocaleString()}`;
+        
+        updateStatus(5, 'success', message, 'success');
+      } catch (error) {
+        updateStatus(5, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function test6_fetchObjectives() {
+      try {
+        const { data, error } = await supabase
+          .from('objectives')
+          .select(`
+            *,
+            owner:profiles!objectives_owner_id_fkey(id, email, full_name, avatar_url),
+            created_by_user:profiles!objectives_created_by_fkey(id, email, full_name, avatar_url),
+            key_results(
+              *,
+              owner:profiles(id, email, full_name, avatar_url)
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          let message = `❌ Failed to fetch objectives\n\n`;
+          message += `Error Code: ${error.code}\n`;
+          message += `Error Message: ${error.message}\n`;
+          
+          if (error.code === '42P01') {
+            message += '\nCause: Table does not exist\n';
+            message += 'Fix: Run supabase-schema.sql';
+          } else if (error.code === '42501') {
+            message += '\nCause: RLS policy is blocking\n';
+            message += 'Fix: Re-run supabase-schema.sql to create proper RLS policies';
+          }
+          
+          updateStatus(6, 'error', message, 'error');
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          let message = `⚠️ No objectives found in database\n\n`;
+          message += 'The database is working correctly, but empty.\n\n';
+          message += 'Next steps:\n';
+          message += '1. Go to http://localhost:5173\n';
+          message += '2. Click "New Objective" button\n';
+          message += '3. Create your first objective';
+          updateStatus(6, 'warning', message, 'warning');
+        } else {
+          let message = `✅ Successfully fetched ${data.length} objective(s)!\n\n`;
+          data.forEach((obj, i) => {
+            message += `\nObjective ${i + 1}:\n`;
+            message += `  Title: ${obj.title}\n`;
+            message += `  Progress: ${obj.progress}%\n`;
+            message += `  Status: ${obj.status}\n`;
+            message += `  Key Results: ${obj.key_results?.length || 0}\n`;
+          });
+          updateStatus(6, 'success', message, 'success');
+        }
+      } catch (error) {
+        updateStatus(6, 'error', `Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function runAllTests() {
+      const btn = document.getElementById('runTests');
+      const btnText = document.getElementById('btnText');
+      
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="loading"></span> Running tests...';
+      
+      testResults = { passed: 0, failed: 0, warnings: 0 };
+      
+      await test1_checkEnv();
+      await test2_initClient();
+      await test3_checkAuth();
+      await test4_checkTables();
+      await test5_checkProfile();
+      await test6_fetchObjectives();
+      
+      // Show summary
+      const summaryEl = document.getElementById('summary');
+      summaryEl.style.display = 'grid';
+      summaryEl.innerHTML = `
+        <div class="summary-card success">
+          <h3>${testResults.passed}</h3>
+          <p>Passed</p>
+        </div>
+        <div class="summary-card error">
+          <h3>${testResults.failed}</h3>
+          <p>Failed</p>
+        </div>
+        <div class="summary-card warning">
+          <h3>${testResults.warnings}</h3>
+          <p>Warnings</p>
+        </div>
+      `;
+      
+      btn.disabled = false;
+      btnText.textContent = 'Re-run All Tests';
+    }
+
+    // Auto-run on page load
+    window.onload = () => {
+      setTimeout(runAllTests, 500);
+    };
+  </script>
+</body>
+</html>
