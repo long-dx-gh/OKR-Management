@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { OKRList } from './components/OKRList';
 import { OKRDetail } from './components/OKRDetail';
 import ActivityFeed from './components/ActivityFeed';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import {
   fetchObjectives,
   subscribeToObjectives,
@@ -55,7 +56,7 @@ function convertToObjective(obj: ObjectiveWithDetails): Objective {
 export default function App() {
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'board'>('list');
+  const [view, setView] = useState<'list' | 'board' | 'analytics'>('list');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
@@ -203,31 +204,36 @@ export default function App() {
         setShowActivityFeed={setShowActivityFeed}
       />
       
-      <div className="flex flex-1 overflow-hidden">
-        <OKRList
-          objectives={objectives}
-          selectedObjective={selectedObjective}
-          onSelectObjective={handleSelectObjective}
-          onAddObjective={addObjective}
-          view={view}
-        />
-        
-        {selectedObjective && (
-          <OKRDetail
-            key={selectedObjective.id}
-            objective={selectedObjective}
-            onUpdate={updateObjective}
-            onDelete={deleteObjective}
+      {/* V1 Feature #2: Analytics View */}
+      {view === 'analytics' ? (
+        <AnalyticsDashboard />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          <OKRList
+            objectives={objectives}
+            selectedObjective={selectedObjective}
+            onSelectObjective={handleSelectObjective}
+            onAddObjective={addObjective}
+            view={view}
           />
-        )}
+          
+          {selectedObjective && (
+            <OKRDetail
+              key={selectedObjective.id}
+              objective={selectedObjective}
+              onUpdate={updateObjective}
+              onDelete={deleteObjective}
+            />
+          )}
 
-        {/* V1 Feature #1: Activity Feed Panel */}
-        {showActivityFeed && (
-          <div className="w-80 border-l border-gray-200 bg-white overflow-hidden">
-            <ActivityFeed limit={50} className="h-full" />
-          </div>
-        )}
-      </div>
+          {/* V1 Feature #1: Activity Feed Panel */}
+          {showActivityFeed && (
+            <div className="w-80 border-l border-gray-200 bg-white overflow-hidden">
+              <ActivityFeed limit={50} className="h-full" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

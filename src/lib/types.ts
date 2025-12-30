@@ -193,3 +193,107 @@ export interface AddReactionInput {
   comment_id: string
   emoji: string
 }
+
+// ============================================
+// V1 Feature #2: Analytics & Insights Types
+// ============================================
+
+// Overall OKR Statistics
+export interface OKRStatistics {
+  total_objectives: number
+  total_key_results: number
+  active_users: number
+  avg_progress: number
+  on_track_count: number
+  at_risk_count: number
+  off_track_count: number
+  completed_count: number
+  overdue_count: number
+}
+
+// Progress Over Time
+export interface ProgressOverTime {
+  date: string
+  objectives_updated: number
+  avg_progress: number
+}
+
+// Team Performance
+export interface TeamPerformance {
+  user_id: string
+  full_name: string | null
+  email: string
+  owned_objectives: number
+  avg_progress: number
+  on_track: number
+  at_risk: number
+  off_track: number
+  owned_key_results: number
+  total_comments: number
+  total_activities: number
+}
+
+// Status Distribution
+export interface StatusDistribution {
+  week: string
+  status: ObjectiveStatus
+  count: number
+}
+
+// Completion Rate
+export interface CompletionRate {
+  month: string
+  total_objectives: number
+  completed_objectives: number
+  completion_percentage: number
+}
+
+// Objective Progress Trend
+export interface ProgressTrend {
+  date: string
+  progress: number
+}
+
+// Team Velocity
+export interface TeamVelocity {
+  week: string
+  completed_count: number
+  created_count: number
+  velocity_score: number
+}
+
+// User Engagement
+export interface UserEngagement {
+  user_id: string
+  engagement_score: number
+  activities_count: number
+  comments_count: number
+  objectives_created: number
+  last_activity: string
+}
+
+// Top Performer
+export interface TopPerformer {
+  user_id: string
+  full_name: string | null
+  email: string
+  avg_progress: number
+  objectives_count: number
+  on_track_count: number
+}
+
+// Chart Data Point (for recharts)
+export interface ChartDataPoint {
+  name: string
+  value: number
+  [key: string]: string | number
+}
+
+// Dashboard Summary
+export interface DashboardSummary {
+  statistics: OKRStatistics
+  progressTrend: ProgressOverTime[]
+  teamPerformance: TeamPerformance[]
+  topPerformers: TopPerformer[]
+  velocity: TeamVelocity[]
+}

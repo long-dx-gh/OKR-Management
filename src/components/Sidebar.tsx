@@ -1,8 +1,8 @@
-import { Target, LayoutList, LayoutGrid, Users, Settings, HelpCircle, Activity } from 'lucide-react';
+import { Target, LayoutList, LayoutGrid, Users, Settings, HelpCircle, Activity, BarChart3 } from 'lucide-react';
 
 interface SidebarProps {
-  view: 'list' | 'board';
-  setView: (view: 'list' | 'board') => void;
+  view: 'list' | 'board' | 'analytics';
+  setView: (view: 'list' | 'board' | 'analytics') => void;
   showActivityFeed: boolean;
   setShowActivityFeed: (show: boolean) => void;
 }
@@ -52,6 +52,18 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
         >
           <Activity className="w-5 h-5 mr-3" />
           <span>Hoạt động</span>
+        </button>
+
+        <button 
+          onClick={() => setView('analytics')}
+          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
+            view === 'analytics' 
+              ? 'bg-purple-50 text-purple-700' 
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <BarChart3 className="w-5 h-5 mr-3" />
+          <span>Thống kê</span>
         </button>
 
         <div className="pt-4 pb-2">

@@ -252,4 +252,4 @@ LIMIT 1;
 -- Next steps:
 -- 1. Run this script in Supabase SQL Editor
 -- 2. Verify tables created
--- 3. Test commenting in the app
+-- 3. Test commenting in the app đ
