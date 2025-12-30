@@ -1,11 +1,13 @@
-import { Target, LayoutList, LayoutGrid, Users, Settings, HelpCircle } from 'lucide-react';
+import { Target, LayoutList, LayoutGrid, Users, Settings, HelpCircle, Activity } from 'lucide-react';
 
 interface SidebarProps {
   view: 'list' | 'board';
   setView: (view: 'list' | 'board') => void;
+  showActivityFeed: boolean;
+  setShowActivityFeed: (show: boolean) => void;
 }
 
-export function Sidebar({ view, setView }: SidebarProps) {
+export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }: SidebarProps) {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
@@ -38,6 +40,18 @@ export function Sidebar({ view, setView }: SidebarProps) {
         >
           <LayoutGrid className="w-5 h-5 mr-3" />
           <span>Bảng Kanban</span>
+        </button>
+
+        <button 
+          onClick={() => setShowActivityFeed(!showActivityFeed)}
+          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
+            showActivityFeed 
+              ? 'bg-purple-50 text-purple-700' 
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <Activity className="w-5 h-5 mr-3" />
+          <span>Hoạt động</span>
         </button>
 
         <div className="pt-4 pb-2">

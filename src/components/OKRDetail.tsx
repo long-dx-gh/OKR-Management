@@ -3,6 +3,7 @@ import { Calendar, User, Trash2, Plus, MoreVertical } from 'lucide-react';
 import { Objective, KeyResult } from '../App';
 import { KeyResultItem } from './KeyResultItem';
 import { AddKeyResultModal } from './AddKeyResultModal';
+import CommentSection from './CommentSection';
 import { deleteObjective, updateObjective } from '../lib/okr-service';
 
 interface OKRDetailProps {
@@ -257,6 +258,11 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* V1 Feature #1: Comments Section */}
+        <div className="mt-8">
+          <CommentSection objective_id={objective.id} />
         </div>
       </div>
 

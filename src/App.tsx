@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { OKRList } from './components/OKRList';
 import { OKRDetail } from './components/OKRDetail';
+import ActivityFeed from './components/ActivityFeed';
 import {
   fetchObjectives,
   subscribeToObjectives,
@@ -57,6 +58,7 @@ export default function App() {
   const [view, setView] = useState<'list' | 'board'>('list');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
 
   // Load objectives from Supabase
   useEffect(() => {
@@ -194,7 +196,12 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#f9fafb]">
-      <Sidebar view={view} setView={setView} />
+      <Sidebar 
+        view={view} 
+        setView={setView}
+        showActivityFeed={showActivityFeed}
+        setShowActivityFeed={setShowActivityFeed}
+      />
       
       <div className="flex flex-1 overflow-hidden">
         <OKRList
@@ -212,6 +219,13 @@ export default function App() {
             onUpdate={updateObjective}
             onDelete={deleteObjective}
           />
+        )}
+
+        {/* V1 Feature #1: Activity Feed Panel */}
+        {showActivityFeed && (
+          <div className="w-80 border-l border-gray-200 bg-white overflow-hidden">
+            <ActivityFeed limit={50} className="h-full" />
+          </div>
         )}
       </div>
     </div>
