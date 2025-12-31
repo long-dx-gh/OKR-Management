@@ -4,7 +4,6 @@ import { OKRList } from './components/OKRList';
 import { OKRDetail } from './components/OKRDetail';
 import ActivityFeed from './components/ActivityFeed';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import TestDashboard from './components/TestDashboard';
 import {
   fetchObjectives,
   subscribeToObjectives,
@@ -53,10 +52,11 @@ function convertToObjective(obj: ObjectiveWithDetails): Objective {
     })),
   };
 }
+
 export default function App() {
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'board' | 'analytics' | 'test'>('list');
+  const [view, setView] = useState<'list' | 'board' | 'analytics'>('list');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
@@ -203,13 +203,9 @@ export default function App() {
         showActivityFeed={showActivityFeed}
         setShowActivityFeed={setShowActivityFeed}
       />
-      
       {/* V1 Feature #2: Analytics View */}
       {view === 'analytics' ? (
         <AnalyticsDashboard />
-      ) : view === 'test' ? (
-        /* Test Dashboard - Manual Testing Checklist */
-        <TestDashboard />
       ) : (
         <div className="flex flex-1 overflow-hidden">
           <OKRList

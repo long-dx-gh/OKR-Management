@@ -1,9 +1,12 @@
-import { useState, useMemo, useCallback } from 'react';
-import { Plus, Search, Target } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Plus, Search, Target, ArrowUp, ArrowDown } from 'lucide-react';
 import { Objective } from '../App';
 import { OKRCard } from './OKRCard';
 import { AddObjectiveModal } from './AddObjectiveModal';
 import { KanbanBoard } from './KanbanBoard';
+
+type SortField = 'dueDate' | 'progress' | 'title';
+type SortDirection = 'asc' | 'desc';
 
 interface OKRListProps {
   objectives: Objective[];
@@ -17,15 +20,57 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'on-track' | 'at-risk' | 'off-track'>('all');
+  const [sortField, setSortField] = useState<SortField>(() => {
+    return (localStorage.getItem('okr-sort-field') as SortField) || 'dueDate';
+  });
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
+    return (localStorage.getItem('okr-sort-direction') as SortDirection) || 'asc';
+  });
+
+  // Persist sort preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('okr-sort-field', sortField);
+    localStorage.setItem('okr-sort-direction', sortDirection);
+  }, [sortField, sortDirection]);
 
   const filteredObjectives = useMemo(() => {
-    return objectives.filter(obj => {
+    let result = objectives.filter(obj => {
       const matchesSearch = obj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            obj.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = filterStatus === 'all' || obj.status === filterStatus;
       return matchesSearch && matchesFilter;
     });
-  }, [objectives, searchQuery, filterStatus]);
+
+    // Apply sorting
+    result.sort((a, b) => {
+      let compareValue = 0;
+
+      if (sortField === 'dueDate') {
+        const dateA = new Date(a.dueDate).getTime();
+        const dateB = new Date(b.dueDate).getTime();
+        compareValue = dateA - dateB;
+      } else if (sortField === 'progress') {
+        compareValue = (a.progress || 0) - (b.progress || 0);
+      } else if (sortField === 'title') {
+        compareValue = a.title.localeCompare(b.title);
+      }
+
+      return sortDirection === 'asc' ? compareValue : -compareValue;
+    });
+
+    return result;
+  }, [objectives, searchQuery, filterStatus, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new field with default ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const handleAddObjective = useCallback((objective: Objective) => {
     onAddObjective(objective);
@@ -104,6 +149,50 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
             }`}
           >
             Lệch tiến độ
+          </button>
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
+          <span className="text-xs text-gray-500 self-center">Sắp xếp:</span>
+          <button
+            onClick={() => handleSort('dueDate')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+              sortField === 'dueDate'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <span>Hạn</span>
+            {sortField === 'dueDate' && (
+              sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+            )}
+          </button>
+          <button
+            onClick={() => handleSort('progress')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+              sortField === 'progress'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <span>Tiến độ</span>
+            {sortField === 'progress' && (
+              sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+            )}
+          </button>
+          <button
+            onClick={() => handleSort('title')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+              sortField === 'title'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <span>Tên</span>
+            {sortField === 'title' && (
+              sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+            )}
           </button>
         </div>
       </div>

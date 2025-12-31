@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Calendar, User, Trash2, Edit2, Check, X } from 'lucide-react';
 import { KeyResult } from '../App';
-import { updateKeyResult, deleteKeyResult } from '../lib/okr-service';
+import { updateKeyResultAndRecalculateObjective, deleteKeyResult } from '../lib/okr-service';
 
 interface KeyResultItemProps {
   keyResult: KeyResult;
@@ -40,7 +40,7 @@ export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemPr
     }
 
     try {
-      const { error } = await updateKeyResult({
+      const { error } = await updateKeyResultAndRecalculateObjective({
         id: keyResult.id,
         progress: newProgress
       });

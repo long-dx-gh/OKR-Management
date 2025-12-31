@@ -92,15 +92,17 @@ export default function AnalyticsDashboard() {
 
   // Prepare chart data
   const statusChartData = [
-    { label: 'On Track', value: stats.on_track_count, color: 'fill-green-500' },
-    { label: 'At Risk', value: stats.at_risk_count, color: 'fill-yellow-500' },
-    { label: 'Off Track', value: stats.off_track_count, color: 'fill-red-500' },
+    { label: 'On Track', value: stats.on_track_count, color: '#22c55e' }, // green-500
+    { label: 'At Risk', value: stats.at_risk_count, color: '#eab308' }, // yellow-500
+    { label: 'Off Track', value: stats.off_track_count, color: '#ef4444' }, // red-500
   ]
 
-  const progressChartData = progressTrend.map((p) => ({
-    label: new Date(p.date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }),
-    value: Math.round(p.avg_progress),
-  }))
+  const progressChartData = progressTrend.length > 0 
+    ? progressTrend.map((p) => ({
+        label: new Date(p.date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }),
+        value: Math.round(p.avg_progress),
+      }))
+    : [] // Empty array - chart will show "No data available"
 
   const velocityChartData = velocity.slice(0, 8).reverse().map((v) => ({
     label: new Date(v.week).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }),
@@ -213,13 +215,7 @@ export default function AnalyticsDashboard() {
           {/* Progress Trend */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Progress Trend (30 days)</h3>
-            {progressChartData.length > 0 ? (
-              <SimpleLineChart data={progressChartData} height={220} />
-            ) : (
-              <div className="flex items-center justify-center h-52 text-gray-400">
-                No progress data yet
-              </div>
-            )}
+            <SimpleLineChart data={progressChartData} height={220} color="#6366f1" />
           </div>
         </div>
 

@@ -20,7 +20,7 @@ interface SimpleLineChartProps {
 export default function SimpleLineChart({
   data,
   height = 200,
-  color = 'stroke-indigo-500',
+  color = '#6366f1', // indigo-500
   showDots = true,
   showGrid = true,
 }: SimpleLineChartProps) {
@@ -35,18 +35,18 @@ export default function SimpleLineChart({
     )
   }
 
-  const padding = 20
-  const width = 100 // percentage
+  const padding = 40
+  const width = 600 // Fixed width for consistent rendering
   const chartHeight = height - padding * 2
   const chartWidth = width - padding * 2
 
-  const maxValue = Math.max(...data.map((d) => d.value), 1)
-  const minValue = Math.min(...data.map((d) => d.value), 0)
+  const maxValue = Math.max(...data.map((d) => d.value), 100)
+  const minValue = 0 // Always start from 0 for percentage
   const range = maxValue - minValue || 1
 
   // Generate path points
   const points = data.map((point, index) => {
-    const x = padding + (chartWidth / (data.length - 1 || 1)) * index
+    const x = padding + (chartWidth / Math.max(data.length - 1, 1)) * index
     const y = padding + chartHeight - ((point.value - minValue) / range) * chartHeight
     return { x, y, value: point.value }
   })
@@ -68,12 +68,16 @@ export default function SimpleLineChart({
     <div className="w-full">
       {/* Chart */}
       <div className="relative" style={{ height }}>
-        <svg className="w-full h-full" viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
+        <svg 
+          className="w-full h-full" 
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="xMidYMid meet"
+        >
           {/* Grid Lines */}
           {showGrid && (
-            <g className="opacity-20">
+            <g opacity="0.3">
               {[0, 25, 50, 75, 100].map((percent) => {
-                const y = padding + (chartHeight * percent) / 100
+                const y = padding + (chartHeight * (100 - percent)) / 100
                 return (
                   <line
                     key={percent}
@@ -81,9 +85,30 @@ export default function SimpleLineChart({
                     y1={y}
                     x2={width - padding}
                     y2={y}
-                    className="stroke-gray-300"
-                    strokeWidth="0.5"
+                    stroke="#d1d5db"
+                    strokeWidth="1"
                   />
+                )
+              })}
+            </g>
+          )}
+
+          {/* Y-axis labels */}
+          {showGrid && (
+            <g>
+              {[0, 25, 50, 75, 100].map((percent) => {
+                const y = padding + (chartHeight * (100 - percent)) / 100
+                return (
+                  <text
+                    key={`label-${percent}`}
+                    x={padding - 10}
+                    y={y + 4}
+                    fill="#9ca3af"
+                    fontSize="12"
+                    textAnchor="end"
+                  >
+                    {percent}%
+                  </text>
                 )
               })}
             </g>
@@ -92,14 +117,15 @@ export default function SimpleLineChart({
           {/* Area Fill */}
           <path
             d={areaD}
-            className={`${color.replace('stroke-', 'fill-')} opacity-10`}
+            fill={color}
+            opacity="0.15"
           />
 
           {/* Line */}
           <path
             d={pathD}
-            className={color}
-            strokeWidth="2"
+            stroke={color}
+            strokeWidth="3"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -112,18 +138,20 @@ export default function SimpleLineChart({
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r="3"
-                  className={`${color.replace('stroke-', 'fill-')} stroke-white`}
+                  r="4"
+                  fill={color}
+                  stroke="white"
                   strokeWidth="2"
                 />
                 {/* Hover area */}
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r="8"
-                  className="fill-transparent hover:fill-indigo-100 transition-colors cursor-pointer"
+                  r="10"
+                  fill="transparent"
+                  className="hover:fill-indigo-100 transition-colors cursor-pointer"
                 >
-                  <title>{`${data[index].label}: ${point.value}`}</title>
+                  <title>{`${data[index].label}: ${point.value}%`}</title>
                 </circle>
               </g>
             ))}
@@ -131,7 +159,7 @@ export default function SimpleLineChart({
       </div>
 
       {/* Labels */}
-      <div className="flex justify-between mt-2 px-5">
+      <div className="flex justify-between mt-2 px-10">
         {data.length <= 7
           ? data.map((item, index) => (
               <div key={index} className="text-xs text-gray-600 text-center">

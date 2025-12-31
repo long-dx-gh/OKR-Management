@@ -1,8 +1,9 @@
-import { Target, LayoutList, LayoutGrid, Users, Settings, HelpCircle, Activity, BarChart3, TestTube2 } from 'lucide-react';
+import { Target, LayoutList, LayoutGrid, Users, HelpCircle, Activity, BarChart3 } from 'lucide-react';
+import { SettingsMenu } from './SettingsMenu';
 
 interface SidebarProps {
-  view: 'list' | 'board' | 'analytics' | 'test';
-  setView: (view: 'list' | 'board' | 'analytics' | 'test') => void;
+  view: 'list' | 'board' | 'analytics';
+  setView: (view: 'list' | 'board' | 'analytics') => void;
   showActivityFeed: boolean;
   setShowActivityFeed: (show: boolean) => void;
 }
@@ -53,7 +54,6 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
           <Activity className="w-5 h-5 mr-3" />
           <span>Hoạt động</span>
         </button>
-
         <button 
           onClick={() => setView('analytics')}
           className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
@@ -66,18 +66,6 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
           <span>Thống kê</span>
         </button>
 
-        <button 
-          onClick={() => setView('test')}
-          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-            view === 'test' 
-              ? 'bg-purple-50 text-purple-700' 
-              : 'text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <TestTube2 className="w-5 h-5 mr-3" />
-          <span>Test Dashboard</span>
-        </button>
-
         <div className="pt-4 pb-2">
           <div className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">
             Workspace
@@ -85,22 +73,21 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
           
           <button className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
             <Users className="w-5 h-5 mr-3" />
-            <span>Team</span>
-          </button>
-          
-          <button className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-            <Settings className="w-5 h-5 mr-3" />
-            <span>Cài đặt</span>
+            <span>Nhóm của tôi</span>
           </button>
         </div>
       </nav>
 
-      {/* Bottom Help */}
-      <div className="p-3 border-t border-gray-200">
+      {/* Bottom Section */}
+      <div className="p-3 border-t border-gray-200 space-y-2">
+        {/* Help Button */}
         <button className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
           <HelpCircle className="w-5 h-5 mr-3" />
           <span>Trợ giúp</span>
         </button>
+
+        {/* Settings Menu with User Info & Logout */}
+        <SettingsMenu />
       </div>
     </div>
   );

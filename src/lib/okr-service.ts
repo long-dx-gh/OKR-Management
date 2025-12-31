@@ -338,6 +338,56 @@ export async function updateKeyResult(
 }
 
 /**
+ * Cập nhật key result và tự động recalculate objective progress
+ */
+export async function updateKeyResultAndRecalculateObjective(
+  input: UpdateKeyResultInput
+): Promise<{ data: DbKeyResult | null; error: Error | null }> {
+  try {
+    const { id, ...updates } = input
+
+    // 1. Cập nhật key result
+    const { data: updatedKR, error: krError } = await supabase
+      .from('key_results')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (krError) throw krError
+
+    // 2. Lấy objective_id từ key result vừa update
+    const objectiveId = updatedKR.objective_id
+
+    // 3. Lấy tất cả key results của objective này
+    const { data: allKeyResults, error: fetchError } = await supabase
+      .from('key_results')
+      .select('*')
+      .eq('objective_id', objectiveId)
+
+    if (fetchError) throw fetchError
+
+    // 4. Tính toán progress mới
+    const newProgress = calculateObjectiveProgress(allKeyResults || [])
+
+    // 5. Cập nhật objective progress
+    const { error: objError } = await supabase
+      .from('objectives')
+      .update({ progress: newProgress })
+      .eq('id', objectiveId)
+
+    if (objError) throw objError
+
+    console.log(`✅ Updated objective ${objectiveId} progress to ${newProgress}%`)
+
+    return { data: updatedKR, error: null }
+  } catch (error) {
+    console.error('Error updating key result and recalculating:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+/**
  * Xóa key result
  */
 export async function deleteKeyResult(

@@ -109,7 +109,8 @@ export default function SimplePieChart({
           <g key={index}>
             <path
               d={slice.path}
-              className={`${slice.color} hover:opacity-80 transition-opacity cursor-pointer`}
+              fill={slice.color}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
               stroke="white"
               strokeWidth="2"
             >
@@ -127,7 +128,8 @@ export default function SimplePieChart({
               x={center}
               y={center - 5}
               textAnchor="middle"
-              className="text-2xl font-bold fill-gray-900"
+              className="text-2xl font-bold"
+              fill="#111827"
             >
               {total}
             </text>
@@ -135,7 +137,8 @@ export default function SimplePieChart({
               x={center}
               y={center + 15}
               textAnchor="middle"
-              className="text-xs fill-gray-500"
+              className="text-xs"
+              fill="#6b7280"
             >
               Total
             </text>
@@ -147,8 +150,15 @@ export default function SimplePieChart({
       {showLegend && (
         <div className="flex flex-wrap gap-3 justify-center max-w-md">
           {slices.map((slice, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-sm ${slice.color}`} />
+            <div 
+              key={index} 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-75 transition-opacity"
+              title={`${slice.label}: ${slice.value} (${slice.percentage}%)`}
+            >
+              <div 
+                className="w-3 h-3 rounded-sm" 
+                style={{ backgroundColor: slice.color }}
+              />
               <span className="text-xs text-gray-700">
                 {slice.label} ({slice.percentage}%)
               </span>
