@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './components/LoginPage'
 import { SignUpPage } from './components/SignUpPage'
+import { OKRVisualizationPage } from './components/OKRVisualizationPage'
 import App from './App.tsx'
 import './globals.css'
 
@@ -23,6 +24,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedRoute>
                 <App />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* OKR Visualization Page */}
+          <Route
+            path="/visualization"
+            element={
+              <ProtectedRoute>
+                <OKRVisualizationPage />
               </ProtectedRoute>
             }
           />

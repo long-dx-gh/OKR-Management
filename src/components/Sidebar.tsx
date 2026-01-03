@@ -1,5 +1,6 @@
-import { Target, LayoutList, LayoutGrid, Users, HelpCircle, Activity, BarChart3 } from 'lucide-react';
+import { Target, LayoutList, LayoutGrid, Users, HelpCircle, Activity, BarChart3, Network } from 'lucide-react';
 import { SettingsMenu } from './SettingsMenu';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   view: 'list' | 'board' | 'analytics';
@@ -9,6 +10,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }: SidebarProps) {
+  const navigate = useNavigate();
+  
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
@@ -44,6 +47,14 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
         </button>
 
         <button 
+          onClick={() => navigate('/visualization')}
+          className="w-full flex items-center px-3 py-2 rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+        >
+          <Network className="w-5 h-5 mr-3" />
+          <span>Visualization</span>
+        </button>
+
+        <button 
           onClick={() => setShowActivityFeed(!showActivityFeed)}
           className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
             showActivityFeed 
@@ -54,6 +65,7 @@ export function Sidebar({ view, setView, showActivityFeed, setShowActivityFeed }
           <Activity className="w-5 h-5 mr-3" />
           <span>Hoạt động</span>
         </button>
+        
         <button 
           onClick={() => setView('analytics')}
           className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${

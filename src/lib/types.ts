@@ -23,6 +23,7 @@ export interface DbObjective {
   title: string
   description: string | null
   owner_id: string | null
+  parent_id: string | null // Reference to parent objective for hierarchy
   status: ObjectiveStatus
   progress: number
   due_date: string | null
@@ -63,6 +64,8 @@ export interface ObjectiveWithDetails extends DbObjective {
   owner?: Profile
   created_by_user?: Profile
   key_results?: KeyResultWithOwner[]
+  parent?: DbObjective // Parent objective data (if exists)
+  children?: ObjectiveWithDetails[] // Child objectives (for tree view)
 }
 
 // Key Result với owner info
@@ -78,6 +81,7 @@ export interface CreateObjectiveInput {
   title: string
   description?: string
   owner_id?: string
+  parent_id?: string // Reference to parent objective
   status?: ObjectiveStatus
   progress?: number
   due_date?: string
@@ -297,3 +301,99 @@ export interface DashboardSummary {
   topPerformers: TopPerformer[]
   velocity: TeamVelocity[]
 }
+
+// ============================================
+// V2 Feature: OKR Visualization & Mapping Types
+// ============================================
+
+// Node type cho visualization
+export interface OKRNode {
+  id: string
+  type: 'objective' | 'keyResult' | 'user'
+  label: string
+  data: {
+    title?: string
+    progress?: number
+    status?: ObjectiveStatus
+    owner?: Profile
+    due_date?: string | null
+    description?: string | null
+    target?: number
+    unit?: string
+  }
+  position?: { x: number; y: number }
+  style?: Record<string, any>
+}
+
+// Edge/Link type cho visualization
+export interface OKREdge {
+  id: string
+  source: string
+  target: string
+  type?: 'default' | 'smoothstep' | 'step' | 'straight'
+  animated?: boolean
+  label?: string
+  style?: Record<string, any>
+}
+
+// Visualization Data Structure
+export interface OKRVisualizationData {
+  nodes: OKRNode[]
+  edges: OKREdge[]
+  metadata: {
+    total_nodes: number
+    total_edges: number
+    last_updated: string
+  }
+}
+
+// Filter options for visualization
+export interface OKRVisualizationFilters {
+  status?: ObjectiveStatus[]
+  owner_ids?: string[]
+  progress_min?: number
+  progress_max?: number
+  date_range?: {
+    start: string
+    end: string
+  }
+  search_query?: string
+}
+
+// Real-time update event types
+export type OKRUpdateEventType = 
+  | 'objective:created'
+  | 'objective:updated'
+  | 'objective:deleted'
+  | 'keyresult:created'
+  | 'keyresult:updated'
+  | 'keyresult:deleted'
+  | 'progress:updated'
+
+// Real-time update payload
+export interface OKRRealtimeUpdate {
+  type: OKRUpdateEventType
+  payload: {
+    id: string
+    data?: any
+    timestamp: string
+  }
+}
+
+// Visualization Layout Options
+export type VisualizationLayout = 'hierarchy' | 'force' | 'circular' | 'grid'
+
+// Visualization Settings
+export interface VisualizationSettings {
+  layout: VisualizationLayout
+  showProgress: boolean
+  showOwners: boolean
+  showDates: boolean
+  enableAnimations: boolean
+  nodeSize: 'small' | 'medium' | 'large'
+  colorScheme: 'status' | 'owner' | 'progress'
+}
+
+// ============================================
+// Dashboard Summary
+// ============================================
