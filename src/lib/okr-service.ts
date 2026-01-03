@@ -462,6 +462,8 @@ export async function inviteTeamMember(
 export function subscribeToObjectives(
   callback: (payload: any) => void
 ) {
+  console.log('🔴 [REALTIME] Creating objectives subscription...');
+  
   const subscription = supabase
     .channel('objectives-changes')
     .on(
@@ -471,11 +473,23 @@ export function subscribeToObjectives(
         schema: 'public',
         table: 'objectives',
       },
-      callback
+      (payload) => {
+        console.log('🔴 [REALTIME] Objectives event received:', payload);
+        callback(payload);
+      }
     )
-    .subscribe()
+    .subscribe((status) => {
+      console.log('🔴 [REALTIME] Objectives subscription status:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ [REALTIME] Successfully subscribed to objectives');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ [REALTIME] Error subscribing to objectives');
+      } else if (status === 'TIMED_OUT') {
+        console.error('⏱️ [REALTIME] Subscription timed out');
+      }
+    });
 
-  return subscription
+  return subscription;
 }
 
 /**
@@ -485,6 +499,8 @@ export function subscribeToKeyResults(
   objectiveId: string,
   callback: (payload: any) => void
 ) {
+  console.log('🔴 [REALTIME] Creating key results subscription for:', objectiveId);
+  
   const subscription = supabase
     .channel(`key-results-${objectiveId}`)
     .on(
@@ -495,9 +511,21 @@ export function subscribeToKeyResults(
         table: 'key_results',
         filter: `objective_id=eq.${objectiveId}`,
       },
-      callback
+      (payload) => {
+        console.log('🔴 [REALTIME] Key Results event received:', payload);
+        callback(payload);
+      }
     )
-    .subscribe()
+    .subscribe((status) => {
+      console.log('🔴 [REALTIME] Key Results subscription status:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log(`✅ [REALTIME] Successfully subscribed to key_results for objective: ${objectiveId}`);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ [REALTIME] Error subscribing to key_results');
+      } else if (status === 'TIMED_OUT') {
+        console.error('⏱️ [REALTIME] Subscription timed out');
+      }
+    });
 
   return subscription
 }

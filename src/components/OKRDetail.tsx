@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Calendar, User, Trash2, Plus, MoreVertical, Edit2, Check, X } from 'lucide-react';
 import { Objective, KeyResult } from '../App';
 import { KeyResultItem } from './KeyResultItem';
 import { AddKeyResultModal } from './AddKeyResultModal';
 import CommentSection from './CommentSection';
-import { deleteObjective, updateObjective } from '../lib/okr-service';
+import { deleteObjective, updateObjective, subscribeToKeyResults, fetchObjectives } from '../lib/okr-service';
 
 interface OKRDetailProps {
   objective: Objective;
@@ -19,6 +19,54 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedTitle, setEditedTitle] = useState(objective.title);
   const [editedDescription, setEditedDescription] = useState(objective.description);
+
+  // Subscribe to realtime Key Results updates
+  useEffect(() => {
+    console.log('🔴 [REALTIME] Setting up subscription for objective:', objective.id);
+    
+    const subscription = subscribeToKeyResults(objective.id, async (payload) => {
+      console.log('🔴 [REALTIME] Key Result changed:', payload);
+      
+      // Reload objective data to get updated KRs and recalculated progress
+      try {
+        const { data } = await fetchObjectives();
+        if (data) {
+          const updatedObj = data.find(obj => obj.id === objective.id);
+          if (updatedObj) {
+            // Convert to Objective format
+            const converted = {
+              id: updatedObj.id,
+              title: updatedObj.title,
+              description: updatedObj.description || '',
+              owner: updatedObj.owner?.full_name || updatedObj.owner?.email || 'Unknown',
+              status: updatedObj.status,
+              progress: updatedObj.progress,
+              dueDate: updatedObj.due_date || '',
+              keyResults: (updatedObj.key_results || []).map(kr => ({
+                id: kr.id,
+                title: kr.title,
+                progress: kr.progress,
+                target: kr.target,
+                unit: kr.unit,
+                owner: kr.owner?.full_name || kr.owner?.email || 'Unknown',
+                dueDate: kr.due_date || '',
+              })),
+            };
+            
+            console.log('🔴 [REALTIME] Updated objective with new KR data:', converted);
+            onUpdate(converted);
+          }
+        }
+      } catch (err) {
+        console.error('Error reloading objective after KR change:', err);
+      }
+    });
+
+    return () => {
+      console.log('🔴 [REALTIME] Cleaning up subscription for objective:', objective.id);
+      subscription.unsubscribe();
+    };
+  }, [objective.id, onUpdate]);
   
   const statusConfig = {
     'on-track': { color: 'bg-green-500', label: 'Đúng tiến độ', bgColor: 'bg-green-50', textColor: 'text-green-700' },

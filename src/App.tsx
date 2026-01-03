@@ -61,25 +61,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
 
-  // Load objectives from Supabase
-  useEffect(() => {
-    loadObjectives();
-  }, []);
-
-  // Subscribe to realtime updates
-  useEffect(() => {
-    const subscription = subscribeToObjectives((payload) => {
-      console.log('Realtime update:', payload);
-      // Reload objectives on any change
-      loadObjectives();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const loadObjectives = async () => {
+  // Define loadObjectives with useCallback
+  const loadObjectives = useCallback(async () => {
     try {
       console.log('🔍 [DEBUG] Starting to load objectives...')
       setLoading(true);
@@ -109,10 +92,13 @@ export default function App() {
         setObjectives(converted);
         
         // Auto-select first objective if none selected
-        if (!selectedObjectiveId && converted.length > 0) {
-          console.log('🎯 [DEBUG] Auto-selecting first objective:', converted[0].id)
-          setSelectedObjectiveId(converted[0].id);
-        }
+        setSelectedObjectiveId(prev => {
+          if (!prev && converted.length > 0) {
+            console.log('🎯 [DEBUG] Auto-selecting first objective:', converted[0].id)
+            return converted[0].id;
+          }
+          return prev;
+        });
       }
       
       console.log('✅ [DEBUG] Load objectives completed successfully')
@@ -124,7 +110,55 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load objectives from Supabase on mount
+  useEffect(() => {
+    loadObjectives();
+  }, [loadObjectives]);
+
+  // Subscribe to realtime updates for Objectives
+  useEffect(() => {
+    console.log('🔴 [REALTIME] Setting up objectives subscription...');
+    
+    const subscription = subscribeToObjectives((payload) => {
+      console.log('🔴 [REALTIME] Objective changed:', payload);
+      
+      const eventType = payload.eventType;
+      
+      if (eventType === 'INSERT') {
+        // New objective created - reload to get full details with relations
+        console.log('🔴 [REALTIME] New objective inserted, reloading...');
+        loadObjectives();
+      } else if (eventType === 'UPDATE') {
+        // Objective updated - fetch updated data with relations
+        console.log('🔴 [REALTIME] Objective updated, reloading...');
+        loadObjectives();
+      } else if (eventType === 'DELETE') {
+        // Objective deleted - remove from state
+        const deletedId = payload.old?.id;
+        console.log('🔴 [REALTIME] Objective deleted:', deletedId);
+        if (deletedId) {
+          setObjectives(prev => {
+            const filtered = prev.filter(obj => obj.id !== deletedId);
+            // Update selection if needed
+            setSelectedObjectiveId(prevId => {
+              if (prevId === deletedId) {
+                return filtered[0]?.id || null;
+              }
+              return prevId;
+            });
+            return filtered;
+          });
+        }
+      }
+    });
+
+    return () => {
+      console.log('🔴 [REALTIME] Cleaning up objectives subscription');
+      subscription.unsubscribe();
+    };
+  }, [loadObjectives]); // ← Add loadObjectives as dependency
 
   // Derive selectedObjective from objectives array using useMemo
   const selectedObjective = useMemo(() => {
