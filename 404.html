@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OKR Platform</title>
   <script>
-    // Redirect 404s to index.html with the path as a query parameter
-    // This allows client-side routing to work on GitHub Pages
-    sessionStorage.setItem('redirect', location.pathname);
+    // GitHub Pages SPA redirect fix
+    // Save the full path including hash and search params
+    var pathToSave = location.pathname + location.search + location.hash;
+    sessionStorage.setItem('redirect', pathToSave);
+    
+    // Redirect to base URL
     location.replace('/OKR-Management/');
   </script>
 </head>
