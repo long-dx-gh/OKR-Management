@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OKR Platform - Quản lý Mục tiêu và Kết quả chính</title>
+    
+    <!-- GitHub Pages SPA redirect fix -->
+    <script>
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.pathname) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/OKR-Management/assets/index-B3zXujKb.js"></script>
     <link rel="stylesheet" crossorigin href="/OKR-Management/assets/index-Dl7BcyuV.css">
   </head>
