@@ -9,10 +9,13 @@
     <!-- GitHub Pages SPA redirect fix -->
     <script>
       (function() {
-        var redirect = sessionStorage.redirect;
-        delete sessionStorage.redirect;
+        var redirect = sessionStorage.getItem('redirect');
+        sessionStorage.removeItem('redirect');
         if (redirect && redirect !== location.pathname) {
-          history.replaceState(null, null, redirect);
+          // Ensure we're using the correct base path
+          var basePath = '/OKR-Management';
+          var fullPath = redirect.startsWith(basePath) ? redirect : basePath + redirect;
+          history.replaceState(null, null, fullPath);
         }
       })();
     </script>
