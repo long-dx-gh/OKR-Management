@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { KeyResult } from '../App';
-import { createKeyResult } from '../lib/okr-service';
 
 interface AddKeyResultModalProps {
   objectiveId: string;
   onClose: () => void;
-  onAdd: (keyResult: KeyResult) => void;
+  onAdd: (input: { title: string; target: number; unit: string; due_date: string }) => Promise<void>;
 }
 
-export function AddKeyResultModal({ objectiveId, onClose, onAdd }: AddKeyResultModalProps) {
+export function AddKeyResultModal({ onClose, onAdd }: AddKeyResultModalProps) {
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
   const [unit, setUnit] = useState('');
@@ -40,31 +38,14 @@ export function AddKeyResultModal({ objectiveId, onClose, onAdd }: AddKeyResultM
       setLoading(true);
       setError(null);
 
-      const { data, error: createError } = await createKeyResult({
-        objective_id: objectiveId,
+      await onAdd({
         title: title.trim(),
         target: targetNumber,
         unit: unit.trim(),
         due_date: dueDate,
       });
 
-      if (createError) throw createError;
-
-      if (data) {
-        // Convert to KeyResult format
-        const newKeyResult: KeyResult = {
-          id: data.id,
-          title: data.title,
-          progress: data.progress,
-          target: data.target,
-          unit: data.unit,
-          owner: 'Me', // Current user
-          dueDate: data.due_date || '',
-        };
-
-        onAdd(newKeyResult);
-        onClose();
-      }
+      onClose();
     } catch (err) {
       console.error('Error creating key result:', err);
       setError(err instanceof Error ? err.message : 'Failed to create key result');

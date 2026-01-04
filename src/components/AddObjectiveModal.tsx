@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Objective } from '../App';
-import { createObjective } from '../lib/okr-service';
 
 interface AddObjectiveModalProps {
   onClose: () => void;
-  onAdd: (objective: Objective) => void;
+  onAdd: (objectiveData: Omit<Objective, 'id' | 'keyResults' | 'owner'>) => Promise<string | null>;
 }
 
 export function AddObjectiveModal({ onClose, onAdd }: AddObjectiveModalProps) {
@@ -33,31 +32,19 @@ export function AddObjectiveModal({ onClose, onAdd }: AddObjectiveModalProps) {
       setLoading(true);
       setError(null);
 
-      const { data, error: createError } = await createObjective({
+      // Call parent's onAdd which handles optimistic updates
+      const newId = await onAdd({
         title: title.trim(),
         description: description.trim(),
         status,
         progress: 0,
-        due_date: dueDate,
+        dueDate,
       });
 
-      if (createError) throw createError;
-
-      if (data) {
-        // Convert to Objective format for parent component
-        const newObjective: Objective = {
-          id: data.id,
-          title: data.title,
-          description: data.description || '',
-          owner: 'Me', // Current user
-          status: data.status,
-          progress: data.progress,
-          dueDate: data.due_date || '',
-          keyResults: []
-        };
-
-        onAdd(newObjective);
+      if (newId) {
         onClose();
+      } else {
+        setError('Failed to create objective');
       }
     } catch (err) {
       console.error('Error creating objective:', err);

@@ -12,7 +12,7 @@ interface OKRListProps {
   objectives: Objective[];
   selectedObjective: Objective | null;
   onSelectObjective: (objective: Objective) => void;
-  onAddObjective: (objective: Objective) => void;
+  onAddObjective: (objectiveData: Omit<Objective, 'id' | 'keyResults' | 'owner'>) => Promise<string | null>;
   view: 'list' | 'board';
 }
 
@@ -20,6 +20,7 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'on-track' | 'at-risk' | 'off-track'>('all');
+  const [filterCompletion, setFilterCompletion] = useState<'all' | 'completed' | 'incomplete'>('all');
   const [sortField, setSortField] = useState<SortField>(() => {
     return (localStorage.getItem('okr-sort-field') as SortField) || 'dueDate';
   });
@@ -38,7 +39,15 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
       const matchesSearch = obj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            obj.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = filterStatus === 'all' || obj.status === filterStatus;
-      return matchesSearch && matchesFilter;
+      
+      // Filter by completion status
+      const isCompleted = (obj.progress || 0) >= 100;
+      const matchesCompletion = 
+        filterCompletion === 'all' || 
+        (filterCompletion === 'completed' && isCompleted) ||
+        (filterCompletion === 'incomplete' && !isCompleted);
+      
+      return matchesSearch && matchesFilter && matchesCompletion;
     });
 
     // Apply sorting
@@ -59,7 +68,7 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
     });
 
     return result;
-  }, [objectives, searchQuery, filterStatus, sortField, sortDirection]);
+  }, [objectives, searchQuery, filterStatus, filterCompletion, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -72,13 +81,16 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
     }
   };
 
-  const handleAddObjective = useCallback((objective: Objective) => {
-    onAddObjective(objective);
-    setIsModalOpen(false);
+  const handleAddObjective = useCallback(async (objectiveData: Omit<Objective, 'id' | 'keyResults' | 'owner'>) => {
+    const newId = await onAddObjective(objectiveData);
+    if (newId) {
+      setIsModalOpen(false);
+    }
+    return newId;
   }, [onAddObjective]);
 
   if (view === 'board') {
-    return <KanbanBoard objectives={filteredObjectives} onSelectObjective={onSelectObjective} />;
+    return <KanbanBoard objectives={filteredObjectives} onSelectObjective={onSelectObjective} filterCompletion={filterCompletion} setFilterCompletion={setFilterCompletion} />;
   }
 
   return (
@@ -108,48 +120,90 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
           />
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
-              filterStatus === 'all'
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setFilterStatus('on-track')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
-              filterStatus === 'on-track'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Đúng tiến độ
-          </button>
-          <button
-            onClick={() => setFilterStatus('at-risk')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
-              filterStatus === 'at-risk'
-                ? 'bg-yellow-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Rủi ro
-          </button>
-          <button
-            onClick={() => setFilterStatus('off-track')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
-              filterStatus === 'off-track'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Lệch tiến độ
-          </button>
+        {/* Filter Tabs - Combined Status and Completion */}
+        <div className="mt-3">
+          {/* Status Filter */}
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                filterStatus === 'all'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => setFilterStatus('on-track')}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                filterStatus === 'on-track'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Đúng tiến độ
+            </button>
+            <button
+              onClick={() => setFilterStatus('at-risk')}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                filterStatus === 'at-risk'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Rủi ro
+            </button>
+            <button
+              onClick={() => setFilterStatus('off-track')}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                filterStatus === 'off-track'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Lệch tiến độ
+            </button>
+          </div>
+
+          {/* Completion Filter - Compact with Icons */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => setFilterCompletion('all')}
+              className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                filterCompletion === 'all'
+                  ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-300'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+              title="Hiển thị tất cả OKR"
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => setFilterCompletion('completed')}
+              className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                filterCompletion === 'completed'
+                  ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+              title="Chỉ hiển thị OKR đã hoàn thành 100%"
+            >
+              <span className="text-[10px]">✓</span>
+              <span>100%</span>
+            </button>
+            <button
+              onClick={() => setFilterCompletion('incomplete')}
+              className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                filterCompletion === 'incomplete'
+                  ? 'bg-orange-100 text-orange-700 ring-1 ring-orange-300'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+              title="Chỉ hiển thị OKR chưa hoàn thành"
+            >
+              <span className="text-[10px]">○</span>
+              <span>&lt;100%</span>
+            </button>
+          </div>
         </div>
 
         {/* Sort Controls */}

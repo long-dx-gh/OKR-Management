@@ -4,9 +4,11 @@ import { Objective } from '../App';
 interface KanbanBoardProps {
   objectives: Objective[];
   onSelectObjective: (objective: Objective) => void;
+  filterCompletion: 'all' | 'completed' | 'incomplete';
+  setFilterCompletion: (value: 'all' | 'completed' | 'incomplete') => void;
 }
 
-export function KanbanBoard({ objectives, onSelectObjective }: KanbanBoardProps) {
+export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, setFilterCompletion }: KanbanBoardProps) {
   const columns = [
     { id: 'on-track', title: 'Đúng tiến độ', color: 'border-green-500', bgColor: 'bg-green-50' },
     { id: 'at-risk', title: 'Có rủi ro', color: 'border-yellow-500', bgColor: 'bg-yellow-50' },
@@ -20,9 +22,68 @@ export function KanbanBoard({ objectives, onSelectObjective }: KanbanBoardProps)
   const safeProgress = (progress: number) => Math.max(0, Math.min(progress || 0, 100));
 
   return (
-    <div className="flex-1 bg-[#f9fafb] overflow-x-auto">
-      <div className="p-6 min-w-[900px]">
-        <h2 className="text-gray-900 mb-6">Bảng Kanban</h2>
+    <div className="flex-1 bg-[#f9fafb] overflow-x-auto flex flex-col">
+      {/* Header with Title */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <h2 className="text-xl font-semibold text-gray-900">Bảng Kanban</h2>
+      </div>
+
+      {/* Clean Minimal Filter Bar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3.5">
+        <div className="flex items-center justify-between">
+          {/* Left: Filter label with count */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Lọc theo tiến độ</span>
+            {filterCompletion !== 'all' && (
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                Đang lọc
+              </span>
+            )}
+          </div>
+          
+          {/* Right: Compact Segmented Control */}
+          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setFilterCompletion('all')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+                filterCompletion === 'all'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => setFilterCompletion('completed')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                filterCompletion === 'completed'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Chỉ hiển thị OKR đã hoàn thành 100%"
+            >
+              <span className="text-xs">✓</span>
+              <span>100%</span>
+            </button>
+            <button
+              onClick={() => setFilterCompletion('incomplete')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                filterCompletion === 'incomplete'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Chỉ hiển thị OKR chưa hoàn thành"
+            >
+              <span className="text-xs">○</span>
+              <span>&lt;100%</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Kanban Board Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 min-w-[900px]">
         
         <div className="grid grid-cols-3 gap-6">
           {columns.map((column) => {
@@ -51,9 +112,16 @@ export function KanbanBoard({ objectives, onSelectObjective }: KanbanBoardProps)
                           <Target className="w-4 h-4 text-purple-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-gray-900 mb-1 line-clamp-2">
-                            {objective.title}
-                          </h4>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="text-gray-900 line-clamp-2 flex-1">
+                              {objective.title}
+                            </h4>
+                            {safeProgress(objective.progress) >= 100 && (
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full whitespace-nowrap">
+                                ✓ Hoàn thành
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500 line-clamp-2">
                             {objective.description}
                           </p>
@@ -95,6 +163,7 @@ export function KanbanBoard({ objectives, onSelectObjective }: KanbanBoardProps)
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 }

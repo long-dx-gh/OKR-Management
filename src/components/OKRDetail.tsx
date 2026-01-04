@@ -4,7 +4,8 @@ import { Objective, KeyResult } from '../App';
 import { KeyResultItem } from './KeyResultItem';
 import { AddKeyResultModal } from './AddKeyResultModal';
 import CommentSection from './CommentSection';
-import { deleteObjective, updateObjective, subscribeToKeyResults, fetchObjectives } from '../lib/okr-service';
+import { deleteObjective, updateObjective, subscribeToKeyResults } from '../lib/okr-service';
+import { useOptimisticKeyResults } from '../hooks/useOptimisticKeyResults';
 
 interface OKRDetailProps {
   objective: Objective;
@@ -20,54 +21,38 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
   const [editedTitle, setEditedTitle] = useState(objective.title);
   const [editedDescription, setEditedDescription] = useState(objective.description);
 
-  // Subscribe to realtime Key Results updates
+  // Use optimistic key results hook
+  const { createKeyResult, updateKeyResult, deleteKeyResult } = useOptimisticKeyResults({
+    objectiveId: objective.id,
+    keyResults: objective.keyResults,
+    onUpdate: (updatedKeyResults) => {
+      // Update the objective with new key results and recalculated progress
+      const newProgress = calculateProgress(updatedKeyResults);
+      onUpdate({
+        ...objective,
+        keyResults: updatedKeyResults,
+        progress: newProgress,
+      });
+    },
+  });
+
+  // Subscribe to realtime Key Results updates from other users/sessions
   useEffect(() => {
-    console.log('🔴 [REALTIME] Setting up subscription for objective:', objective.id);
+    console.log('🔴 [REALTIME] Setting up KR subscription for objective:', objective.id);
     
     const subscription = subscribeToKeyResults(objective.id, async (payload) => {
-      console.log('🔴 [REALTIME] Key Result changed:', payload);
+      console.log('🔴 [REALTIME] Key Result changed by external source:', payload);
       
-      // Reload objective data to get updated KRs and recalculated progress
-      try {
-        const { data } = await fetchObjectives();
-        if (data) {
-          const updatedObj = data.find(obj => obj.id === objective.id);
-          if (updatedObj) {
-            // Convert to Objective format
-            const converted = {
-              id: updatedObj.id,
-              title: updatedObj.title,
-              description: updatedObj.description || '',
-              owner: updatedObj.owner?.full_name || updatedObj.owner?.email || 'Unknown',
-              status: updatedObj.status,
-              progress: updatedObj.progress,
-              dueDate: updatedObj.due_date || '',
-              keyResults: (updatedObj.key_results || []).map(kr => ({
-                id: kr.id,
-                title: kr.title,
-                progress: kr.progress,
-                target: kr.target,
-                unit: kr.unit,
-                owner: kr.owner?.full_name || kr.owner?.email || 'Unknown',
-                dueDate: kr.due_date || '',
-              })),
-            };
-            
-            console.log('🔴 [REALTIME] Updated objective with new KR data:', converted);
-            onUpdate(converted);
-          }
-        }
-      } catch (err) {
-        console.error('Error reloading objective after KR change:', err);
-      }
+      // Only reload if this change wasn't from our optimistic update
+      // The subscription will trigger a silent background fetch in the parent hook
     });
 
     return () => {
-      console.log('🔴 [REALTIME] Cleaning up subscription for objective:', objective.id);
+      console.log('🔴 [REALTIME] Cleaning up KR subscription');
       subscription.unsubscribe();
     };
-  }, [objective.id, onUpdate]);
-  
+  }, [objective.id]);
+
   const statusConfig = {
     'on-track': { color: 'bg-green-500', label: 'Đúng tiến độ', bgColor: 'bg-green-50', textColor: 'text-green-700' },
     'at-risk': { color: 'bg-yellow-500', label: 'Có rủi ro', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
@@ -98,77 +83,6 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
     
     return Math.round(totalProgress / keyResults.length);
   };
-
-  const updateKeyResult = useCallback(async (updatedKR: KeyResult) => {
-    const updatedKeyResults = objective.keyResults.map(kr =>
-      kr.id === updatedKR.id ? updatedKR : kr
-    );
-    
-    const avgProgress = calculateProgress(updatedKeyResults);
-
-    // Update local state first for instant feedback
-    onUpdate({
-      ...objective,
-      keyResults: updatedKeyResults,
-      progress: avgProgress
-    });
-
-    // Update in database
-    try {
-      await updateObjective({
-        id: objective.id,
-        progress: avgProgress
-      });
-    } catch (err) {
-      console.error('Error updating objective progress:', err);
-    }
-  }, [objective, onUpdate]);
-
-  const deleteKeyResult = useCallback(async (id: string) => {
-    const updatedKeyResults = objective.keyResults.filter(kr => kr.id !== id);
-    const avgProgress = calculateProgress(updatedKeyResults);
-
-    // Update local state first
-    onUpdate({
-      ...objective,
-      keyResults: updatedKeyResults,
-      progress: avgProgress
-    });
-
-    // Update objective progress in database
-    try {
-      await updateObjective({
-        id: objective.id,
-        progress: avgProgress
-      });
-    } catch (err) {
-      console.error('Error updating objective progress:', err);
-    }
-  }, [objective, onUpdate]);
-
-  const addKeyResult = useCallback(async (keyResult: KeyResult) => {
-    const updatedKeyResults = [...objective.keyResults, keyResult];
-    const avgProgress = calculateProgress(updatedKeyResults);
-
-    // Update local state first
-    onUpdate({
-      ...objective,
-      keyResults: updatedKeyResults,
-      progress: avgProgress
-    });
-
-    // Update objective progress in database
-    try {
-      await updateObjective({
-        id: objective.id,
-        progress: avgProgress
-      });
-    } catch (err) {
-      console.error('Error updating objective progress:', err);
-    }
-    
-    setIsAddKRModalOpen(false);
-  }, [objective, onUpdate]);
 
   const changeStatus = useCallback(async (newStatus: 'on-track' | 'at-risk' | 'off-track') => {
     setShowMenu(false);
@@ -472,8 +386,12 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
               <KeyResultItem
                 key={kr.id}
                 keyResult={kr}
-                onUpdate={updateKeyResult}
-                onDelete={deleteKeyResult}
+                onUpdate={async (id, updates) => {
+                  await updateKeyResult(id, updates);
+                }}
+                onDelete={async (id) => {
+                  await deleteKeyResult(id);
+                }}
               />
             ))}
             {objective.keyResults.length === 0 && (
@@ -500,7 +418,9 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
         <AddKeyResultModal
           objectiveId={objective.id}
           onClose={() => setIsAddKRModalOpen(false)}
-          onAdd={addKeyResult}
+          onAdd={async (input) => {
+            await createKeyResult(input);
+          }}
         />
       )}
     </div>

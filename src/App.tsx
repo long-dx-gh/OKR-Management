@@ -1,14 +1,12 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { OKRList } from './components/OKRList';
 import { OKRDetail } from './components/OKRDetail';
 import ActivityFeed from './components/ActivityFeed';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import {
-  fetchObjectives,
-  subscribeToObjectives,
-} from './lib/okr-service';
-import type { ObjectiveWithDetails } from './lib/types';
+import { ToastContainer } from './components/ToastContainer';
+import { useOptimisticObjectives } from './hooks/useOptimisticObjectives';
+import { useToast } from './hooks/useToast';
 
 export interface KeyResult {
   id: string;
@@ -31,134 +29,26 @@ export interface Objective {
   keyResults: KeyResult[];
 }
 
-// Helper function: Convert ObjectiveWithDetails to Objective
-function convertToObjective(obj: ObjectiveWithDetails): Objective {
-  return {
-    id: obj.id,
-    title: obj.title,
-    description: obj.description || '',
-    owner: obj.owner?.full_name || obj.owner?.email || 'Unknown',
-    status: obj.status,
-    progress: obj.progress,
-    dueDate: obj.due_date || '',
-    keyResults: (obj.key_results || []).map(kr => ({
-      id: kr.id,
-      title: kr.title,
-      progress: kr.progress,
-      target: kr.target,
-      unit: kr.unit,
-      owner: kr.owner?.full_name || kr.owner?.email || 'Unknown',
-      dueDate: kr.due_date || '',
-    })),
-  };
-}
+// Memoized Sidebar to prevent unnecessary re-renders
+const MemoizedSidebar = memo(Sidebar);
 
 export default function App() {
-  const [objectives, setObjectives] = useState<Objective[]>([]);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'board' | 'analytics'>('list');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
 
-  // Define loadObjectives with useCallback
-  const loadObjectives = useCallback(async () => {
-    try {
-      console.log('🔍 [DEBUG] Starting to load objectives...')
-      setLoading(true);
-      setError(null);
-      
-      console.log('📡 [DEBUG] Calling fetchObjectives...')
-      const { data, error: fetchError } = await fetchObjectives();
-      
-      console.log('📊 [DEBUG] Response received:', { 
-        hasData: !!data, 
-        dataLength: data?.length,
-        hasError: !!fetchError,
-        errorMessage: fetchError?.message,
-        errorCode: (fetchError as any)?.code,
-        errorDetails: (fetchError as any)?.details
-      })
-      
-      if (fetchError) {
-        console.error('❌ [DEBUG] Fetch error details:', fetchError)
-        throw fetchError
-      }
-      
-      if (data) {
-        console.log('✅ [DEBUG] Converting data...', data.length, 'objectives')
-        const converted = data.map(convertToObjective);
-        console.log('✅ [DEBUG] Converted successfully:', converted)
-        setObjectives(converted);
-        
-        // Auto-select first objective if none selected
-        setSelectedObjectiveId(prev => {
-          if (!prev && converted.length > 0) {
-            console.log('🎯 [DEBUG] Auto-selecting first objective:', converted[0].id)
-            return converted[0].id;
-          }
-          return prev;
-        });
-      }
-      
-      console.log('✅ [DEBUG] Load objectives completed successfully')
-    } catch (err) {
-      console.error('💥 [DEBUG] Error in loadObjectives:', err);
-      console.error('💥 [DEBUG] Error type:', typeof err);
-      console.error('💥 [DEBUG] Error stack:', (err as Error).stack);
-      setError(err instanceof Error ? err.message : 'Failed to load objectives');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Use optimistic updates hook
+  const {
+    objectives,
+    initialLoading,
+    error,
+    createObjective,
+    updateObjective,
+    deleteObjective,
+  } = useOptimisticObjectives();
 
-  // Load objectives from Supabase on mount
-  useEffect(() => {
-    loadObjectives();
-  }, [loadObjectives]);
-
-  // Subscribe to realtime updates for Objectives
-  useEffect(() => {
-    console.log('🔴 [REALTIME] Setting up objectives subscription...');
-    
-    const subscription = subscribeToObjectives((payload) => {
-      console.log('🔴 [REALTIME] Objective changed:', payload);
-      
-      const eventType = payload.eventType;
-      
-      if (eventType === 'INSERT') {
-        // New objective created - reload to get full details with relations
-        console.log('🔴 [REALTIME] New objective inserted, reloading...');
-        loadObjectives();
-      } else if (eventType === 'UPDATE') {
-        // Objective updated - fetch updated data with relations
-        console.log('🔴 [REALTIME] Objective updated, reloading...');
-        loadObjectives();
-      } else if (eventType === 'DELETE') {
-        // Objective deleted - remove from state
-        const deletedId = payload.old?.id;
-        console.log('🔴 [REALTIME] Objective deleted:', deletedId);
-        if (deletedId) {
-          setObjectives(prev => {
-            const filtered = prev.filter(obj => obj.id !== deletedId);
-            // Update selection if needed
-            setSelectedObjectiveId(prevId => {
-              if (prevId === deletedId) {
-                return filtered[0]?.id || null;
-              }
-              return prevId;
-            });
-            return filtered;
-          });
-        }
-      }
-    });
-
-    return () => {
-      console.log('🔴 [REALTIME] Cleaning up objectives subscription');
-      subscription.unsubscribe();
-    };
-  }, [loadObjectives]); // ← Add loadObjectives as dependency
+  // Toast notifications for errors
+  const { toasts, removeToast, success, error: showError } = useToast();
 
   // Derive selectedObjective from objectives array using useMemo
   const selectedObjective = useMemo(() => {
@@ -167,38 +57,70 @@ export default function App() {
       : null;
   }, [objectives, selectedObjectiveId]);
 
-  const updateObjective = useCallback((updatedObjective: Objective) => {
-    setObjectives(prev => 
-      prev.map(obj => 
-        obj.id === updatedObjective.id ? updatedObjective : obj
-      )
-    );
-  }, []);
-
-  const deleteObjective = useCallback((id: string) => {
-    // First update the selection if needed
-    if (id === selectedObjectiveId) {
-      setObjectives(prev => {
-        const filtered = prev.filter(obj => obj.id !== id);
-        setSelectedObjectiveId(filtered[0]?.id || null);
-        return filtered;
-      });
-    } else {
-      setObjectives(prev => prev.filter(obj => obj.id !== id));
+  // Auto-select first objective on initial load
+  useMemo(() => {
+    if (objectives.length > 0 && !selectedObjectiveId) {
+      setSelectedObjectiveId(objectives[0].id);
     }
-  }, [selectedObjectiveId]);
+  }, [objectives, selectedObjectiveId]);
 
-  const addObjective = useCallback((objective: Objective) => {
-    setObjectives(prev => [...prev, objective]);
-    setSelectedObjectiveId(objective.id);
-  }, []);
+  const handleUpdateObjective = useCallback(async (updatedObjective: Objective) => {
+    const { error: updateError } = await updateObjective(updatedObjective);
+    if (updateError) {
+      console.error('Failed to update objective:', updateError);
+      showError('Không thể cập nhật objective. Vui lòng thử lại.');
+    } else {
+      success('Đã cập nhật objective thành công');
+    }
+  }, [updateObjective, success, showError]);
+
+  const handleDeleteObjective = useCallback(async (id: string) => {
+    // Update selection if deleting selected objective
+    if (id === selectedObjectiveId) {
+      const remaining = objectives.filter(obj => obj.id !== id);
+      setSelectedObjectiveId(remaining[0]?.id || null);
+    }
+    
+    const { error: deleteError } = await deleteObjective(id);
+    if (deleteError) {
+      console.error('Failed to delete objective:', deleteError);
+      showError('Không thể xóa objective. Vui lòng thử lại.');
+    } else {
+      success('Đã xóa objective thành công');
+    }
+  }, [selectedObjectiveId, objectives, deleteObjective, success, showError]);
+
+  const handleAddObjective = useCallback(async (objectiveData: Omit<Objective, 'id' | 'keyResults' | 'owner'>) => {
+    const { data, error: createError } = await createObjective({
+      title: objectiveData.title,
+      description: objectiveData.description,
+      status: objectiveData.status,
+      progress: objectiveData.progress,
+      due_date: objectiveData.dueDate,
+    });
+
+    if (createError) {
+      console.error('Failed to create objective:', createError);
+      showError('Không thể tạo objective. Vui lòng thử lại.');
+      return null;
+    }
+
+    if (data) {
+      // Auto-select the newly created objective
+      setSelectedObjectiveId(data);
+      success('Đã tạo objective mới thành công');
+      return data;
+    }
+    
+    return null;
+  }, [createObjective, success, showError]);
 
   const handleSelectObjective = useCallback((objective: Objective) => {
     setSelectedObjectiveId(objective.id);
   }, []);
 
-  // Show loading state
-  if (loading) {
+  // Show initial loading state only
+  if (initialLoading) {
     return (
       <div className="flex h-screen bg-[#f9fafb] items-center justify-center">
         <div className="text-center">
@@ -218,7 +140,7 @@ export default function App() {
             <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading OKRs</h2>
             <p className="text-red-600 mb-4">{error}</p>
             <button
-              onClick={loadObjectives}
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Try Again
@@ -231,7 +153,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#f9fafb]">
-      <Sidebar 
+      <MemoizedSidebar 
         view={view} 
         setView={setView}
         showActivityFeed={showActivityFeed}
@@ -246,7 +168,7 @@ export default function App() {
             objectives={objectives}
             selectedObjective={selectedObjective}
             onSelectObjective={handleSelectObjective}
-            onAddObjective={addObjective}
+            onAddObjective={handleAddObjective}
             view={view}
           />
           
@@ -254,8 +176,8 @@ export default function App() {
             <OKRDetail
               key={selectedObjective.id}
               objective={selectedObjective}
-              onUpdate={updateObjective}
-              onDelete={deleteObjective}
+              onUpdate={handleUpdateObjective}
+              onDelete={handleDeleteObjective}
             />
           )}
 
@@ -267,6 +189,9 @@ export default function App() {
           )}
         </div>
       )}
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }

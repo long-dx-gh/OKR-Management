@@ -183,6 +183,27 @@ function nodeMatchesFilters(node: OKRNode, filters: OKRVisualizationFilters): bo
     }
   }
 
+  // Filter by date range (for nodes with due_date)
+  if (filters.date_range) {
+    const { start, end } = filters.date_range
+    if (node.data.due_date) {
+      const dueDate = new Date(node.data.due_date)
+      const startDate = new Date(start)
+      const endDate = new Date(end)
+      
+      // Set time to start/end of day for accurate comparison
+      startDate.setHours(0, 0, 0, 0)
+      endDate.setHours(23, 59, 59, 999)
+      
+      if (dueDate < startDate || dueDate > endDate) {
+        return false
+      }
+    } else {
+      // If date_range filter is active but node doesn't have due_date, exclude it
+      return false
+    }
+  }
+
   // Filter by search query
   if (filters.search_query) {
     const query = filters.search_query.toLowerCase()

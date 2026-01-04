@@ -161,7 +161,11 @@ export function useNodeSelection() {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
   const selectNode = useCallback((nodeId: string | null) => {
-    setSelectedNodeId(nodeId)
+    // Force update even if same node is selected again
+    setSelectedNodeId(null) // Clear first
+    setTimeout(() => {
+      setSelectedNodeId(nodeId) // Then set new value
+    }, 0)
   }, [])
 
   const hoverNode = useCallback((nodeId: string | null) => {

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Calendar, User, Trash2, Edit2, Check, X } from 'lucide-react';
 import { KeyResult } from '../App';
-import { updateKeyResultAndRecalculateObjective, deleteKeyResult } from '../lib/okr-service';
 
 interface KeyResultItemProps {
   keyResult: KeyResult;
-  onUpdate: (keyResult: KeyResult) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<KeyResult>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemProps) {
@@ -51,18 +50,7 @@ export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemPr
     }
 
     try {
-      const { error } = await updateKeyResultAndRecalculateObjective({
-        id: keyResult.id,
-        progress: newProgress
-      });
-
-      if (error) throw error;
-
-      // Update local state
-      onUpdate({
-        ...keyResult,
-        progress: newProgress
-      });
+      await onUpdate(keyResult.id, { progress: newProgress });
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating key result:', err);
@@ -95,17 +83,7 @@ export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemPr
     }
 
     try {
-      const { error } = await updateKeyResultAndRecalculateObjective({
-        id: keyResult.id,
-        title: editedTitle.trim(),
-        target: newTarget
-      });
-
-      if (error) throw error;
-
-      // Update local state
-      onUpdate({
-        ...keyResult,
+      await onUpdate(keyResult.id, {
         title: editedTitle.trim(),
         target: newTarget
       });
@@ -128,12 +106,7 @@ export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemPr
     }
 
     try {
-      const { error } = await deleteKeyResult(keyResult.id);
-
-      if (error) throw error;
-
-      // Update parent
-      onDelete(keyResult.id);
+      await onDelete(keyResult.id);
     } catch (err) {
       console.error('Error deleting key result:', err);
       alert('Không thể xóa key result. Vui lòng thử lại.');

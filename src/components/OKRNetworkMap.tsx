@@ -219,6 +219,11 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
       .append('circle')
       .attr('r', getNodeRadius)
       .attr('fill', (d) => {
+        // KR nodes luôn là màu #1f5799
+        if (d.type === 'keyResult') {
+          return '#1f5799' // màu xanh dương đậm
+        }
+        // Objectives và Users giữ nguyên logic
         if (settings.colorScheme === 'status' && d.data.status) {
           return d.style?.backgroundColor || '#6B7280'
         } else if (settings.colorScheme === 'progress' && d.data.progress !== undefined) {

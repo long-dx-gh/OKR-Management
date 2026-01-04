@@ -42,9 +42,16 @@ export function OKRCard({ objective, isSelected, onClick }: OKRCardProps) {
           <Target className={`w-4 h-4 ${isSelected ? 'text-purple-600' : 'text-gray-600'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-gray-900 mb-1 line-clamp-2">
-            {objective.title}
-          </h3>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="text-gray-900 line-clamp-2 flex-1">
+              {objective.title}
+            </h3>
+            {safeProgress >= 100 && (
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full whitespace-nowrap">
+                ✓ Hoàn thành
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500 line-clamp-1">
             {objective.description}
           </p>

@@ -213,22 +213,10 @@ export const OKRVisualizationPage: React.FC = () => {
 
                     {/* Key Results */}
                     <div className="pt-2 border-t">
-                      <div className="font-medium text-gray-700 mb-1">Key Results (theo tiến độ):</div>
+                      <div className="font-medium text-gray-700 mb-1">Key Results:</div>
                       <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <span>≥75% - Hoàn thành tốt</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                        <span>50-74% - Đang tiến triển</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                        <span>25-49% - Cần chú ý</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <span>&lt;25% - Chậm tiến độ</span>
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1f5799' }} />
+                        <span>Key Results</span>
                       </div>
                     </div>
                   </div>
