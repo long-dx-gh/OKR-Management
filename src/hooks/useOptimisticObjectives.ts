@@ -4,15 +4,15 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Objective } from '../App';
+import { Objective } from '../app/App';
 import {
   fetchObjectives,
   createObjective as createObjectiveService,
   updateObjective as updateObjectiveService,
   deleteObjective as deleteObjectiveService,
   subscribeToObjectives,
-} from '../lib/okr-service';
-import type { ObjectiveWithDetails, CreateObjectiveInput } from '../lib/types';
+} from '../services/okr.service';
+import type { ObjectiveWithDetails, CreateObjectiveInput } from '../types';
 
 // Temporary ID generator for optimistic updates
 const generateTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

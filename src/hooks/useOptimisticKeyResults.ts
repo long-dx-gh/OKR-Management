@@ -4,13 +4,13 @@
  */
 
 import { useState, useCallback } from 'react';
-import { KeyResult } from '../App';
+import { KeyResult } from '../app/App';
 import {
   createKeyResult as createKeyResultService,
   updateKeyResult as updateKeyResultService,
   deleteKeyResult as deleteKeyResultService,
-} from '../lib/okr-service';
-import type { CreateKeyResultInput, UpdateKeyResultInput } from '../lib/types';
+} from '../services/okr.service';
+import type { CreateKeyResultInput, UpdateKeyResultInput } from '../types';
 
 // Temporary ID generator for optimistic updates
 const generateTempId = () => `temp_kr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

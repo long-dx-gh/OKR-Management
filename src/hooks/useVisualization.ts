@@ -9,13 +9,13 @@ import {
   applyRealtimeUpdate,
   calculateLayout,
   applyFilters,
-} from '../lib/visualization-service'
+} from '../services/visualization.service'
 import type {
   OKRVisualizationData,
   OKRVisualizationFilters,
   OKRRealtimeUpdate,
   VisualizationLayout,
-} from '../lib/types'
+} from '../types'
 
 /**
  * Hook để fetch và manage visualization data với real-time updates
