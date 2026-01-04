@@ -29,7 +29,7 @@ export const OKRVisualizationPage: React.FC = () => {
   const { selectedNodeId, selectNode, hoverNode, clearSelection } = useNodeSelection()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showLegendSheet, setShowLegendSheet] = useState(false) // State for mobile legend bottom sheet
-  const [legendCollapsed, setLegendCollapsed] = useState(false) // State for desktop legend sidebar collapse
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // State for desktop sidebar collapse
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Get selected node details
@@ -99,6 +99,12 @@ export const OKRVisualizationPage: React.FC = () => {
 
   const handleNodeClick = (node: OKRNode) => {
     selectNode(node.id)
+    
+    // 🎯 Desktop: Tự động mở Sidebar khi click node (nếu đang collapsed)
+    if (!isMobile && sidebarCollapsed) {
+      setSidebarCollapsed(false)
+    }
+    
     // Optional: Navigate to detail page
     // if (node.type === 'objective') {
     //   navigate(`/okr/${node.id.replace('obj-', '')}`)
@@ -208,95 +214,193 @@ export const OKRVisualizationPage: React.FC = () => {
 
       {/* Main Content */}
       <div className={`flex-1 flex overflow-hidden ${isMobile ? 'flex-col' : ''}`}>
-        {/* Desktop Legend Sidebar - Collapsible */}
+        {/* Desktop Dynamic Sidebar - Legend or Node Details */}
         {!isLoading && !error && data && data.nodes.length > 0 && !isMobile && (
           <div 
             className={`bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 ${
-              legendCollapsed ? 'w-12' : 'w-64'
+              sidebarCollapsed ? 'w-12' : 'w-80'
             }`}
           >
-            {legendCollapsed ? (
+            {sidebarCollapsed ? (
               /* Collapsed State - Show Button Only */
               <div className="h-full flex flex-col items-center justify-center">
                 <button
-                  onClick={() => setLegendCollapsed(false)}
+                  onClick={() => setSidebarCollapsed(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-                  title="Mở chú thích"
+                  title="Mở sidebar"
                 >
                   <ChevronRight className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
                 </button>
               </div>
             ) : (
-              /* Expanded State - Show Full Legend */
+              /* Expanded State - Show Legend or Node Details */
               <div className="h-full flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-900">Chú Thích</h3>
-                  <button
-                    onClick={() => setLegendCollapsed(true)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                    title="Thu gọn"
-                  >
-                    <ChevronLeft className="h-4 w-4 text-gray-500" />
-                  </button>
-                </div>
-
-                {/* Content - Scrollable */}
-                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-                  {/* User */}
-                  <div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <div className="w-4 h-4 rounded-full bg-purple-500 flex-shrink-0" />
-                      <span className="font-medium">User / Owner</span>
+                {!selectedNode ? (
+                  /* Trạng thái 1: Hiển thị Legend (Chú thích) */
+                  <>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900">Chú Thích</h3>
+                      <button
+                        onClick={() => setSidebarCollapsed(true)}
+                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        title="Thu gọn"
+                      >
+                        <ChevronLeft className="h-4 w-4 text-gray-500" />
+                      </button>
                     </div>
-                  </div>
-                  
-                  {/* Objectives */}
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="text-xs font-semibold text-gray-700 mb-2">Objectives:</div>
-                    <div className="space-y-1.5 ml-1">
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0" />
-                        <span>On-track</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0" />
-                        <span>At-risk</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
-                        <span>Off-track</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Key Results */}
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="text-xs font-semibold text-gray-700 mb-2">Key Results:</div>
-                    <div className="flex items-center gap-2 text-xs ml-1">
-                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#1f5799' }} />
-                      <span>Key Results</span>
-                    </div>
-                  </div>
+                    {/* Content - Scrollable */}
+                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                      {/* User */}
+                      <div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="w-4 h-4 rounded-full bg-purple-500 flex-shrink-0" />
+                          <span className="font-medium">User / Owner</span>
+                        </div>
+                      </div>
+                      
+                      {/* Objectives */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Objectives:</div>
+                        <div className="space-y-1.5 ml-1">
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0" />
+                            <span>On-track</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0" />
+                            <span>At-risk</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
+                            <span>Off-track</span>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Tips */}
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="bg-blue-50 rounded-lg p-2.5">
-                      <div className="flex items-start gap-2">
-                        <span className="text-base flex-shrink-0">💡</span>
-                        <div className="text-xs text-gray-700">
-                          <div className="font-semibold mb-1">Tương tác:</div>
-                          <ul className="space-y-0.5">
-                            <li>• Kéo để di chuyển node</li>
-                            <li>• Cuộn để zoom</li>
-                            <li>• Click để chọn</li>
-                            <li>• Hover để xem chi tiết</li>
-                          </ul>
+                      {/* Key Results */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Key Results:</div>
+                        <div className="flex items-center gap-2 text-xs ml-1">
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#1f5799' }} />
+                          <span>Key Results</span>
+                        </div>
+                      </div>
+
+                      {/* Tips */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="bg-blue-50 rounded-lg p-2.5">
+                          <div className="flex items-start gap-2">
+                            <span className="text-base flex-shrink-0">💡</span>
+                            <div className="text-xs text-gray-700">
+                              <div className="font-semibold mb-1">Tương tác:</div>
+                              <ul className="space-y-0.5">
+                                <li>• Kéo để di chuyển node</li>
+                                <li>• Cuộn để zoom</li>
+                                <li>• Click để chọn</li>
+                                <li>• Hover để xem chi tiết</li>
+                              </ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  /* Trạng thái 2: Hiển thị Chi tiết Node */
+                  <>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900">Chi tiết Node</h3>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={clearSelection}
+                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                          title="Đóng chi tiết"
+                        >
+                          <span className="text-gray-500 text-lg">✕</span>
+                        </button>
+                        <button
+                          onClick={() => setSidebarCollapsed(true)}
+                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                          title="Thu gọn"
+                        >
+                          <ChevronLeft className="h-4 w-4 text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Content - Scrollable */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={selectedNode.type === 'objective' ? 'default' : 'secondary'}>
+                              {selectedNode.type === 'objective' ? 'Objective' : selectedNode.type === 'keyResult' ? 'Key Result' : 'User'}
+                            </Badge>
+                            {selectedNode.data.status && (
+                              <Badge
+                                variant={
+                                  selectedNode.data.status === 'on-track'
+                                    ? 'default'
+                                    : selectedNode.data.status === 'at-risk'
+                                    ? 'secondary'
+                                    : 'destructive'
+                                }
+                              >
+                                {selectedNode.data.status}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-base mt-2">{selectedNode.label}</CardTitle>
+                          {selectedNode.data.description && (
+                            <CardDescription>{selectedNode.data.description}</CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {selectedNode.data.progress !== undefined && (
+                            <div>
+                              <div className="flex items-center justify-between text-sm mb-1">
+                                <span className="text-gray-600">Tiến độ</span>
+                                <span className="font-semibold">{selectedNode.data.progress}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-green-500 h-2 rounded-full transition-all"
+                                  style={{ width: `${selectedNode.data.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedNode.data.target && (
+                            <div className="text-sm">
+                              <span className="text-gray-600">Target:</span>
+                              <span className="ml-2 font-semibold">
+                                {selectedNode.data.target} {selectedNode.data.unit || ''}
+                              </span>
+                            </div>
+                          )}
+
+                          {selectedNode.data.owner && (
+                            <div className="text-sm">
+                              <span className="text-gray-600">Owner:</span>
+                              <span className="ml-2">{selectedNode.data.owner.full_name || selectedNode.data.owner.email}</span>
+                            </div>
+                          )}
+
+                          {selectedNode.data.due_date && (
+                            <div className="text-sm">
+                              <span className="text-gray-600">Due Date:</span>
+                              <span className="ml-2">{new Date(selectedNode.data.due_date).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -465,86 +569,6 @@ export const OKRVisualizationPage: React.FC = () => {
             </>
           )}
         </div>
-
-        {/* Side Panel - Node Details - Desktop only */}
-        {selectedNode && !isMobile && (
-          <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto animate-in slide-in-from-right duration-300">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Chi tiết Node</h3>
-                <Button variant="ghost" size="sm" onClick={clearSelection} title="Đóng">
-                  ✕
-                </Button>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={selectedNode.type === 'objective' ? 'default' : 'secondary'}>
-                      {selectedNode.type === 'objective' ? 'Objective' : selectedNode.type === 'keyResult' ? 'Key Result' : 'User'}
-                    </Badge>
-                    {selectedNode.data.status && (
-                      <Badge
-                        variant={
-                          selectedNode.data.status === 'on-track'
-                            ? 'default'
-                            : selectedNode.data.status === 'at-risk'
-                            ? 'secondary'
-                            : 'destructive'
-                        }
-                      >
-                        {selectedNode.data.status}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-base mt-2">{selectedNode.label}</CardTitle>
-                  {selectedNode.data.description && (
-                    <CardDescription>{selectedNode.data.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {selectedNode.data.progress !== undefined && (
-                    <div>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">Tiến độ</span>
-                        <span className="font-semibold">{selectedNode.data.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all"
-                          style={{ width: `${selectedNode.data.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedNode.data.target && (
-                    <div className="text-sm">
-                      <span className="text-gray-600">Target:</span>
-                      <span className="ml-2 font-semibold">
-                        {selectedNode.data.target} {selectedNode.data.unit || ''}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedNode.data.owner && (
-                    <div className="text-sm">
-                      <span className="text-gray-600">Owner:</span>
-                      <span className="ml-2">{selectedNode.data.owner.full_name || selectedNode.data.owner.email}</span>
-                    </div>
-                  )}
-
-                  {selectedNode.data.due_date && (
-                    <div className="text-sm">
-                      <span className="text-gray-600">Due Date:</span>
-                      <span className="ml-2">{new Date(selectedNode.data.due_date).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
 
         {/* Mobile Modal - Node Details */}
         {selectedNode && isMobile && (
