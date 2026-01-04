@@ -63,12 +63,12 @@ export default function App() {
       : null;
   }, [objectives, selectedObjectiveId]);
 
-  // Auto-select first objective on initial load
+  // Auto-select first objective on initial load (only for desktop)
   useMemo(() => {
-    if (objectives.length > 0 && !selectedObjectiveId) {
+    if (objectives.length > 0 && !selectedObjectiveId && !isMobile) {
       setSelectedObjectiveId(objectives[0].id);
     }
-  }, [objectives, selectedObjectiveId]);
+  }, [objectives, selectedObjectiveId, isMobile]);
 
   const handleUpdateObjective = useCallback(async (updatedObjective: Objective) => {
     const { error: updateError } = await updateObjective(updatedObjective);

@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
+import { useResponsive } from '../../hooks/useMediaQuery'
 import type { OKRNode, OKREdge, VisualizationSettings } from '../../types'
 
 interface OKRNetworkMapProps {
@@ -26,6 +27,7 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
   selectedNodeId,
   className = '',
 }) => {
+  const { isMobile } = useResponsive()
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
@@ -149,6 +151,8 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
         }
         return !event.button // Allow all other events except right-click
       })
+      // Enable touch gestures for mobile
+      .touchable(() => true)
       .on('zoom', (event) => {
         // Apply transform smoothly - no transitions for responsive feel
         g.attr('transform', event.transform)
@@ -208,10 +212,12 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
           .on('end', dragended) as any
       )
 
-    // Get node radius based on settings
+    // Get node radius based on settings and device
     const getNodeRadius = (d: OKRNode) => {
+      // On mobile, make nodes slightly larger for easier touch interaction
+      const sizeMultiplier = isMobile ? 1.2 : 1
       const baseRadius = settings.nodeSize === 'small' ? 20 : settings.nodeSize === 'large' ? 40 : 30
-      return d.type === 'user' ? baseRadius * 0.8 : baseRadius
+      return (d.type === 'user' ? baseRadius * 0.8 : baseRadius) * sizeMultiplier
     }
 
     // Add circles to nodes
@@ -465,88 +471,91 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
 
   return (
     <div ref={containerRef} className={`relative w-full h-full ${className}`}>
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
-        <button
-          onClick={handleZoomIn}
-          className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
-          title="Zoom In"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      {/* Zoom Controls - Desktop Only */}
+      {!isMobile && (
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+          <button
+            onClick={handleZoomIn}
+            className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
+            title="Zoom In"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Phóng to (Ctrl/⌘ +)
-          </span>
-        </button>
-        
-        <button
-          onClick={handleZoomOut}
-          className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
-          title="Zoom Out"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Phóng to (Ctrl/⌘ +)
+            </span>
+          </button>
+          
+          <button
+            onClick={handleZoomOut}
+            className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
+            title="Zoom Out"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M20 12H4"
-            />
-          </svg>
-          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Thu nhỏ (Ctrl/⌘ -)
-          </span>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 12H4"
+              />
+            </svg>
+            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Thu nhỏ (Ctrl/⌘ -)
+            </span>
+          </button>
 
-        <div className="border-t border-gray-200 my-1"></div>
+          <div className="border-t border-gray-200 my-1"></div>
 
-        <button
-          onClick={handleResetZoom}
-          className="p-2 hover:bg-green-50 rounded transition-colors group relative"
-          title="Reset View"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-gray-700 group-hover:text-green-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+          <button
+            onClick={handleResetZoom}
+            className="p-2 hover:bg-green-50 rounded transition-colors group relative"
+            title="Reset View"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-            />
-          </svg>
-          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Đặt lại (Ctrl/⌘ 0)
-          </span>
-        </button>
-      </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700 group-hover:text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+              />
+            </svg>
+            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Đặt lại (Ctrl/⌘ 0)
+            </span>
+          </button>
+        </div>
+      )}
 
       <svg
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
         className="bg-gray-50 rounded-lg cursor-grab active:cursor-grabbing"
+        style={isMobile ? { touchAction: 'none' } : undefined}
       />
     </div>
   )

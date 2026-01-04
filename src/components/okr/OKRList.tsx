@@ -98,17 +98,17 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
 
   return (
     <div className={`
-      ${isMobile ? 'w-full' : 'w-96'} 
-      bg-white border-r border-gray-200 flex flex-col
+      ${isMobile ? 'w-full h-full' : 'w-96'} 
+      bg-white ${isMobile ? '' : 'border-r border-gray-200'} flex flex-col
       ${isMobile ? 'pt-14' : ''}
     `}>
       {/* Header */}
-      <div className={`px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-200`}>
+      <div className={`${isMobile ? 'px-3 py-3' : 'px-4 lg:px-6 py-3 lg:py-4'} border-b border-gray-200`}>
         <div className="flex items-center justify-between mb-3 lg:mb-4">
-          <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Objectives</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Objectives</h2>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 active:bg-purple-800 transition-colors touch-manipulation"
+            className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 active:bg-purple-800 transition-colors touch-manipulation shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm font-medium">Thêm mới</span>
@@ -123,7 +123,7 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
             placeholder="Tìm kiếm objectives..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 lg:py-2 text-base lg:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation"
           />
         </div>
 
@@ -259,7 +259,7 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className={`flex-1 overflow-y-auto ${isMobile ? 'px-3 py-3' : 'p-4'} space-y-3`}>
         {filteredObjectives.map((objective) => (
           <OKRCard
             key={objective.id}

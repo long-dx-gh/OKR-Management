@@ -1,5 +1,6 @@
 import { Target } from 'lucide-react';
 import { Objective } from '../../app/App';
+import { useResponsive } from '../../hooks/useMediaQuery';
 
 interface KanbanBoardProps {
   objectives: Objective[];
@@ -9,6 +10,7 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, setFilterCompletion }: KanbanBoardProps) {
+  const { isMobile } = useResponsive();
   const columns = [
     { id: 'on-track', title: 'Đúng tiến độ', color: 'border-green-500', bgColor: 'bg-green-50' },
     { id: 'at-risk', title: 'Có rủi ro', color: 'border-yellow-500', bgColor: 'bg-yellow-50' },
@@ -22,15 +24,15 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
   const safeProgress = (progress: number) => Math.max(0, Math.min(progress || 0, 100));
 
   return (
-    <div className="flex-1 bg-[#f9fafb] overflow-x-auto flex flex-col">
+    <div className={`flex-1 bg-[#f9fafb] overflow-hidden flex flex-col ${isMobile ? 'pt-14' : ''}`}>
       {/* Header with Title */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-gray-900">Bảng Kanban</h2>
+      <div className={`bg-white border-b border-gray-200 ${isMobile ? 'px-3 py-3' : 'px-6 py-4'}`}>
+        <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-900`}>Bảng Kanban</h2>
       </div>
 
       {/* Clean Minimal Filter Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3.5">
-        <div className="flex items-center justify-between">
+      <div className={`bg-white border-b border-gray-200 ${isMobile ? 'px-3 py-2.5' : 'px-6 py-3.5'}`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
           {/* Left: Filter label with count */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Lọc theo tiến độ</span>
@@ -42,10 +44,10 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
           </div>
           
           {/* Right: Compact Segmented Control */}
-          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+          <div className={`inline-flex bg-gray-100 rounded-lg p-1 ${isMobile ? 'w-full' : ''}`}>
             <button
               onClick={() => setFilterCompletion('all')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+              className={`${isMobile ? 'flex-1' : 'px-4'} py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                 filterCompletion === 'all'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -55,7 +57,7 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
             </button>
             <button
               onClick={() => setFilterCompletion('completed')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              className={`${isMobile ? 'flex-1' : 'px-4'} py-1.5 rounded-md text-sm font-medium transition-all flex items-center ${isMobile ? 'justify-center' : ''} gap-1.5 whitespace-nowrap ${
                 filterCompletion === 'completed'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -67,7 +69,7 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
             </button>
             <button
               onClick={() => setFilterCompletion('incomplete')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              className={`${isMobile ? 'flex-1' : 'px-4'} py-1.5 rounded-md text-sm font-medium transition-all flex items-center ${isMobile ? 'justify-center' : ''} gap-1.5 whitespace-nowrap ${
                 filterCompletion === 'incomplete'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -83,37 +85,37 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
 
       {/* Kanban Board Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 min-w-[900px]">
+        <div className={`${isMobile ? 'p-3' : 'p-6'} ${!isMobile ? 'min-w-[900px]' : ''}`}>
         
-        <div className="grid grid-cols-3 gap-6">
+        <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-3 gap-6'}`}>
           {columns.map((column) => {
             const columnObjectives = getObjectivesByStatus(column.id);
             
             return (
               <div key={column.id} className="flex flex-col">
-                <div className={`${column.bgColor} border-t-4 ${column.color} rounded-t-lg px-4 py-3 mb-4`}>
+                <div className={`${column.bgColor} border-t-4 ${column.color} rounded-t-lg px-4 py-3 ${isMobile ? 'mb-3' : 'mb-4'}`}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-gray-900">{column.title}</h3>
+                    <h3 className={`text-gray-900 ${isMobile ? 'text-sm font-semibold' : ''}`}>{column.title}</h3>
                     <span className="text-sm text-gray-600 bg-white px-2 py-0.5 rounded-full">
                       {columnObjectives.length}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-4">
+                <div className={`flex-1 ${isMobile ? 'space-y-3' : 'space-y-4'}`}>
                   {columnObjectives.map((objective) => (
                     <button
                       key={objective.id}
                       onClick={() => onSelectObjective(objective)}
-                      className="w-full text-left p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+                      className={`w-full text-left ${isMobile ? 'p-3' : 'p-4'} bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow active:shadow-lg`}
                     >
-                      <div className="flex items-start gap-3 mb-3">
+                      <div className={`flex items-start gap-3 ${isMobile ? 'mb-2' : 'mb-3'}`}>
                         <div className="p-2 bg-purple-100 rounded-lg">
-                          <Target className="w-4 h-4 text-purple-600" />
+                          <Target className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'} text-purple-600`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h4 className="text-gray-900 line-clamp-2 flex-1">
+                            <h4 className={`text-gray-900 line-clamp-2 flex-1 ${isMobile ? 'text-sm font-medium' : ''}`}>
                               {objective.title}
                             </h4>
                             {safeProgress(objective.progress) >= 100 && (
@@ -128,12 +130,12 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className={`${isMobile ? 'space-y-1.5' : 'space-y-2'}`}>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-600">Tiến độ</span>
-                          <span className="text-gray-900">{safeProgress(objective.progress)}%</span>
+                          <span className="text-gray-900 font-medium">{safeProgress(objective.progress)}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                        <div className={`w-full bg-gray-200 rounded-full ${isMobile ? 'h-1.5' : 'h-1.5'} overflow-hidden`}>
                           <div
                             className={`h-full ${
                               column.id === 'on-track' ? 'bg-green-500' :
@@ -145,9 +147,9 @@ export function KanbanBoard({ objectives, onSelectObjective, filterCompletion, s
                         </div>
                       </div>
 
-                      <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
-                        <span>{objective.owner}</span>
-                        <span>{objective.keyResults?.length || 0} KRs</span>
+                      <div className={`${isMobile ? 'mt-2 pt-2' : 'mt-3 pt-3'} border-t border-gray-200 flex items-center justify-between text-xs text-gray-500`}>
+                        <span className={isMobile ? 'truncate' : ''}>{objective.owner}</span>
+                        <span className="font-medium whitespace-nowrap">{objective.keyResults?.length || 0} KRs</span>
                       </div>
                     </button>
                   ))}
