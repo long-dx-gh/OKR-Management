@@ -301,162 +301,139 @@ export const VisualizationControlPanel: React.FC<VisualizationControlPanelProps>
     )
   }
 
-  // Desktop Version - Original Layout
+  // Desktop Version - Compact Toolbar (Ribbon)
   return (
-    <div className={`bg-white border-b border-gray-200 ${isMobile ? 'p-3' : 'p-4'} space-y-4`}>
-      {/* Top Row: Filters and Actions */}
-      <div className={`flex ${isMobile ? 'flex-col' : 'items-center justify-between'} gap-4`}>
-        {/* Filters */}
-        <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-3 flex-1 ${isMobile ? 'w-full' : ''}`}>
-          {/* Status Filter */}
-          <div className={isMobile ? 'w-full' : 'w-48'}>
-            <Label className="text-xs text-gray-500 mb-1">Trạng thái</Label>
-            <Select value={statusFilter} onValueChange={handleStatusChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="on-track">On Track</SelectItem>
-                <SelectItem value="at-risk">At Risk</SelectItem>
-                <SelectItem value="off-track">Off Track</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="bg-white border-b border-gray-200 px-4 py-2">
+      {/* Single Row: All Filters and Actions */}
+      <div className="flex items-center gap-3">
+        {/* Status Filter - Compact */}
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-gray-600 whitespace-nowrap">Trạng thái:</Label>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="h-8 w-32 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="on-track">On Track</SelectItem>
+              <SelectItem value="at-risk">At Risk</SelectItem>
+              <SelectItem value="off-track">Off Track</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* Progress Range Filter */}
-          <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : ''}`}>
-            <div className={isMobile ? 'flex-1' : 'w-32'}>
-              <Label className="text-xs text-gray-500 mb-1">Tiến độ từ (%)</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={minProgress}
-                onChange={(e) => {
-                  const val = Math.max(0, Math.min(100, Number(e.target.value)))
-                  handleProgressChange(val, maxProgress)
-                }}
-                className="h-9"
-              />
-            </div>
+        <div className="h-4 w-px bg-gray-300" /> {/* Divider */}
 
-            <div className={isMobile ? 'flex-1' : 'w-32'}>
-              <Label className="text-xs text-gray-500 mb-1">đến (%)</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={maxProgress}
-                onChange={(e) => {
-                  const val = Math.max(0, Math.min(100, Number(e.target.value)))
-                  handleProgressChange(minProgress, val)
-                }}
-                className="h-9"
-              />
-            </div>
+        {/* Progress Range - Compact */}
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-gray-600 whitespace-nowrap">Tiến độ:</Label>
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            value={minProgress}
+            onChange={(e) => {
+              const val = Math.max(0, Math.min(100, Number(e.target.value)))
+              handleProgressChange(val, maxProgress)
+            }}
+            className="h-8 w-16 text-xs"
+            placeholder="0"
+          />
+          <span className="text-xs text-gray-400">-</span>
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            value={maxProgress}
+            onChange={(e) => {
+              const val = Math.max(0, Math.min(100, Number(e.target.value)))
+              handleProgressChange(minProgress, val)
+            }}
+            className="h-8 w-16 text-xs"
+            placeholder="100"
+          />
+          <span className="text-xs text-gray-400">%</span>
+        </div>
 
-            {/* Visual Progress Range Bar - Hide on mobile */}
-            {!isMobile && (
-              <div className="flex-1 max-w-xs mt-5">
-              <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="absolute h-full bg-blue-500 transition-all duration-200"
-                  style={{
-                    left: `${minProgress}%`,
-                    width: `${maxProgress - minProgress}%`,
-                  }}
-                />
-              </div>
-            </div>
-            )}
-          </div>
+        <div className="h-4 w-px bg-gray-300" /> {/* Divider */}
 
-          {/* Time Filter */}
-          <div className={isMobile ? 'w-full' : 'w-48'}>
-            <Label className="text-xs text-gray-500 mb-1">Thời gian</Label>
-            <Select value={timeFilter} onValueChange={handleTimeFilterChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="this-week">Tuần này</SelectItem>
-                <SelectItem value="this-month">Tháng này</SelectItem>
-                <SelectItem value="this-quarter">Quý này</SelectItem>
-                <SelectItem value="this-year">Năm này</SelectItem>
-                <SelectItem value="custom">Tùy chỉnh</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Time Filter - Compact */}
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-gray-600 whitespace-nowrap">Thời gian:</Label>
+          <Select value={timeFilter} onValueChange={handleTimeFilterChange}>
+            <SelectTrigger className="h-8 w-36 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="this-week">Tuần này</SelectItem>
+              <SelectItem value="this-month">Tháng này</SelectItem>
+              <SelectItem value="this-quarter">Quý này</SelectItem>
+              <SelectItem value="this-year">Năm này</SelectItem>
+              <SelectItem value="custom">Tùy chỉnh</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* Custom Date Range - Only shown when "Tùy chỉnh" is selected */}
-          {timeFilter === 'custom' && (
-            <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 ${isMobile ? 'w-full' : ''}`}>
-              <div className={isMobile ? 'w-full' : 'w-40'}>
-                <Label className="text-xs text-gray-500 mb-1">Từ ngày</Label>
-                <Input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => handleCustomDateChange(e.target.value, customEndDate)}
-                  className="h-9"
-                />
-              </div>
-              <div className={isMobile ? 'w-full' : 'w-40'}>
-                <Label className="text-xs text-gray-500 mb-1">Đến ngày</Label>
-                <Input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => handleCustomDateChange(customStartDate, e.target.value)}
-                  className="h-9"
-                />
-              </div>
-            </div>
-          )}
+        {/* Custom Date Range - Inline */}
+        {timeFilter === 'custom' && (
+          <>
+            <Input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => handleCustomDateChange(e.target.value, customEndDate)}
+              className="h-8 w-36 text-xs"
+            />
+            <span className="text-xs text-gray-400">→</span>
+            <Input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => handleCustomDateChange(customStartDate, e.target.value)}
+              className="h-8 w-36 text-xs"
+            />
+          </>
+        )}
 
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className={isMobile ? 'w-full' : 'mt-5'}>
-              <X className="h-4 w-4 mr-1" />
+        {/* Clear Filters */}
+        {hasActiveFilters && (
+          <>
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs px-2">
+              <X className="h-3 w-3 mr-1" />
               Xóa
             </Button>
-          )}
-
-          {/* Active Filters Indicator - Hide on mobile */}
-          {hasActiveFilters && !isMobile && (
-            <Badge variant="secondary" className="mt-5">
-              <Filter className="h-3 w-3 mr-1" />
+            <Badge variant="secondary" className="text-xs h-6 px-2">
               {
                 (statusFilter !== 'all' ? 1 : 0) + 
                 (minProgress > 0 || maxProgress < 100 ? 1 : 0) + 
                 (timeFilter !== 'all' ? 1 : 0)
-              } bộ lọc
+              }
             </Badge>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* Actions */}
-        <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-between' : ''}`}>
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Actions - Right Side */}
+        <div className="flex items-center gap-2">
           {/* Realtime Indicator */}
-          <Badge variant={isRealtime ? 'default' : 'secondary'} className="gap-1">
-            <div className={`w-2 h-2 rounded-full ${isRealtime ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-            {isRealtime ? 'Real-time' : 'Offline'}
+          <Badge variant={isRealtime ? 'default' : 'secondary'} className="text-xs h-6 gap-1 px-2">
+            <div className={`w-1.5 h-1.5 rounded-full ${isRealtime ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
+            {isRealtime ? 'Live' : 'Offline'}
           </Badge>
 
-          <div className="flex items-center gap-2">
-            {/* Refresh Button */}
-            <Button variant="outline" size="sm" onClick={onRefresh}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+          {/* Refresh Button */}
+          <Button variant="outline" size="sm" onClick={onRefresh} className="h-8 w-8 p-0">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
 
-            {/* Export Button */}
-            {onExport && !isMobile && (
-              <Button variant="outline" size="sm" onClick={onExport}>
-                <Download className="h-4 w-4 mr-2" />
-                Xuất
-              </Button>
-            )}
-          </div>
+          {/* Export Button */}
+          {onExport && (
+            <Button variant="outline" size="sm" onClick={onExport} className="h-8 text-xs px-2">
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Xuất
+            </Button>
+          )}
         </div>
       </div>
     </div>

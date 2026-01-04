@@ -3,8 +3,8 @@
  * Main page component cho tính năng visualization OKR mapping
  */
 
-import React, { useState } from 'react'
-import { ArrowLeft, Maximize2, Info, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, Maximize2, Minimize2, Info, RefreshCw, Wifi, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { OKRNetworkMap } from './OKRNetworkMap'
 import { VisualizationControlPanel } from './VisualizationControlPanel'
@@ -28,11 +28,65 @@ export const OKRVisualizationPage: React.FC = () => {
   )
   const { selectedNodeId, selectNode, hoverNode, clearSelection } = useNodeSelection()
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showLegend, setShowLegend] = useState(true) // State for legend visibility
   const [showLegendSheet, setShowLegendSheet] = useState(false) // State for mobile legend bottom sheet
+  const [legendCollapsed, setLegendCollapsed] = useState(false) // State for desktop legend sidebar collapse
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Get selected node details
   const selectedNode = selectedNodeId && data?.nodes.find((n) => n.id === selectedNodeId)
+
+  // Fullscreen handling
+  const handleFullscreen = async () => {
+    if (!containerRef.current) return
+
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen()
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          await (containerRef.current as any).webkitRequestFullscreen()
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          await (containerRef.current as any).mozRequestFullScreen()
+        }
+        setIsFullscreen(true)
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen()
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen()
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen()
+        }
+        setIsFullscreen(false)
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err)
+    }
+  }
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement
+      )
+      setIsFullscreen(isCurrentlyFullscreen)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+    }
+  }, [])
 
   const handleFilterChange = (filters: OKRVisualizationFilters) => {
     updateFilters(filters)
@@ -66,9 +120,9 @@ export const OKRVisualizationPage: React.FC = () => {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-gray-50 ${isMobile ? 'okr-visualization-page' : ''}`}>
+    <div ref={containerRef} className={`h-screen flex flex-col bg-gray-50 ${isMobile ? 'okr-visualization-page' : ''}`}>
       {/* Header */}
-      <div className={`bg-white border-b border-gray-200 ${isMobile ? 'px-3 py-2' : 'px-6 py-4'}`}>
+      <div className={`bg-white border-b border-gray-200 ${isMobile ? 'px-3 py-2' : 'px-4 py-2.5'}`}>
         {isMobile ? (
           /* Mobile Header - Compact */
           <div className="flex items-center justify-between">
@@ -97,31 +151,44 @@ export const OKRVisualizationPage: React.FC = () => {
             )}
           </div>
         ) : (
-          /* Desktop Header - Original */
+          /* Desktop Header - Compact Single Line */
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/')}
+                className="h-8 px-2"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
                 Quay lại
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">OKR Visualization</h1>
-                <p className="text-sm text-gray-500">Trực quan hóa mối quan hệ giữa các Objectives và Key Results</p>
-              </div>
+              <div className="h-5 w-px bg-gray-300" /> {/* Divider */}
+              <h1 className="text-lg font-semibold text-gray-900">OKR Visualization</h1>
+              {data && (
+                <>
+                  <Badge variant="secondary" className="text-xs h-6">
+                    {data.metadata.total_nodes} Nodes
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs h-6">
+                    {data.metadata.total_edges} Connections
+                  </Badge>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              {data && (
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <Badge variant="outline">{data.metadata.total_nodes} Nodes</Badge>
-                  <Badge variant="outline">{data.metadata.total_edges} Connections</Badge>
-                </div>
-              )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsFullscreen(!isFullscreen)}
+                onClick={handleFullscreen}
+                className="h-8"
+                title={isFullscreen ? 'Thoát toàn màn hình' : 'Mở toàn màn hình'}
               >
-                <Maximize2 className="h-4 w-4" />
+                {isFullscreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -141,8 +208,109 @@ export const OKRVisualizationPage: React.FC = () => {
 
       {/* Main Content */}
       <div className={`flex-1 flex overflow-hidden ${isMobile ? 'flex-col' : ''}`}>
+        {/* Desktop Legend Sidebar - Collapsible */}
+        {!isLoading && !error && data && data.nodes.length > 0 && !isMobile && (
+          <div 
+            className={`bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 ${
+              legendCollapsed ? 'w-12' : 'w-64'
+            }`}
+          >
+            {legendCollapsed ? (
+              /* Collapsed State - Show Button Only */
+              <div className="h-full flex flex-col items-center justify-center">
+                <button
+                  onClick={() => setLegendCollapsed(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+                  title="Mở chú thích"
+                >
+                  <ChevronRight className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                </button>
+              </div>
+            ) : (
+              /* Expanded State - Show Full Legend */
+              <div className="h-full flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900">Chú Thích</h3>
+                  <button
+                    onClick={() => setLegendCollapsed(true)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    title="Thu gọn"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Content - Scrollable */}
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                  {/* User */}
+                  <div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <div className="w-4 h-4 rounded-full bg-purple-500 flex-shrink-0" />
+                      <span className="font-medium">User / Owner</span>
+                    </div>
+                  </div>
+                  
+                  {/* Objectives */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">Objectives:</div>
+                    <div className="space-y-1.5 ml-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0" />
+                        <span>On-track</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0" />
+                        <span>At-risk</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
+                        <span>Off-track</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Results */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">Key Results:</div>
+                    <div className="flex items-center gap-2 text-xs ml-1">
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#1f5799' }} />
+                      <span>Key Results</span>
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="bg-blue-50 rounded-lg p-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="text-base flex-shrink-0">💡</span>
+                        <div className="text-xs text-gray-700">
+                          <div className="font-semibold mb-1">Tương tác:</div>
+                          <ul className="space-y-0.5">
+                            <li>• Kéo để di chuyển node</li>
+                            <li>• Cuộn để zoom</li>
+                            <li>• Click để chọn</li>
+                            <li>• Hover để xem chi tiết</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Visualization Area */}
-        <div className={`flex-1 relative ${isMobile ? 'h-full okr-visualization-canvas' : ''}`} style={isMobile ? { height: 'calc(100vh - 140px)' } : undefined}>
+        <div 
+          className={`flex-1 relative ${isMobile ? 'h-full okr-visualization-canvas' : ''}`} 
+          style={
+            isMobile 
+              ? { height: 'calc(100vh - 140px)' } 
+              : undefined
+          }
+        >
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
               <div className="text-center space-y-4">
@@ -191,88 +359,6 @@ export const OKRVisualizationPage: React.FC = () => {
               selectedNodeId={selectedNodeId}
               className="h-full"
             />
-          )}
-
-          {/* Legend - Collapsible */}
-          {!isLoading && !error && data && data.nodes.length > 0 && !isMobile && (
-            <div className="absolute bottom-4 left-4 z-10">
-              {showLegend ? (
-                <div className="bg-white rounded-lg shadow-lg p-4 max-w-xs border border-gray-200 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold">Chú thích</h4>
-                    <button
-                      onClick={() => setShowLegend(false)}
-                      className="p-1 hover:bg-gray-100 rounded transition-colors"
-                      title="Ẩn chú thích"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    {/* User */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-purple-500" />
-                      <span>User / Owner</span>
-                    </div>
-                    
-                    {/* Objectives */}
-                    <div className="pt-2 border-t">
-                      <div className="font-medium text-gray-700 mb-1">Objectives:</div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <span>On-track</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                        <span>At-risk</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <span>Off-track</span>
-                      </div>
-                    </div>
-
-                    {/* Key Results */}
-                    <div className="pt-2 border-t">
-                      <div className="font-medium text-gray-700 mb-1">Key Results:</div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1f5799' }} />
-                        <span>Key Results</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t text-xs text-gray-500">
-                    💡 <strong>Tips:</strong> Kéo thả để di chuyển nodes, cuộn để zoom, double-click để reset
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowLegend(true)}
-                  className="bg-white rounded-lg shadow-lg p-3 border border-gray-200 hover:bg-gray-50 transition-colors group"
-                  title="Hiện chú thích"
-                >
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-gray-600 group-hover:text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
-                      Chú thích
-                    </span>
-                  </div>
-                </button>
-              )}
-            </div>
           )}
 
           {/* Mobile Floating Action Buttons */}

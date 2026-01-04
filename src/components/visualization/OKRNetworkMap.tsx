@@ -34,6 +34,7 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
   const transformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity) // Save transform state
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
+  const [tooltip, setTooltip] = useState<{ node: OKRNode; x: number; y: number } | null>(null)
 
   // Zoom control functions with smooth transitions
   const handleZoomIn = () => {
@@ -319,22 +320,85 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
         .text((d) => d.data.owner?.full_name || d.data.owner?.email || '')
     }
 
-    // Add event listeners
+    // Add event listeners with improved hover effects for desktop
     node
       .on('click', (event, d) => {
         event.stopPropagation()
         onNodeClick?.(d)
       })
-      .on('mouseenter', (_event, d) => {
+      .on('mouseenter', (event, d) => {
+        if (!isMobile) {
+          // Show tooltip on desktop
+          const rect = containerRef.current?.getBoundingClientRect()
+          if (rect) {
+            setTooltip({
+              node: d,
+              x: event.pageX - rect.left,
+              y: event.pageY - rect.top,
+            })
+          }
+
+          // Find connected node IDs
+          const connectedNodeIds = new Set<string>()
+          connectedNodeIds.add(d.id)
+          
+          edges.forEach((e) => {
+            if (e.source === d.id) connectedNodeIds.add(e.target)
+            if (e.target === d.id) connectedNodeIds.add(e.source)
+          })
+
+          // Dim unrelated nodes and labels
+          node
+            .transition()
+            .duration(200)
+            .style('opacity', (n) => (connectedNodeIds.has(n.id) ? 1 : 0.2))
+
+          // Highlight connected edges, dim others
+          link
+            .transition()
+            .duration(200)
+            .attr('stroke-opacity', (e) =>
+              e.source === d.id || e.target === d.id ? 1 : 0.1
+            )
+            .attr('stroke-width', (e) =>
+              e.source === d.id || e.target === d.id ? 3 : 2
+            )
+        }
+        
         onNodeHover?.(d)
-        // Highlight connected edges
-        link.attr('stroke-opacity', (e) =>
-          e.source === d.id || e.target === d.id ? 1 : 0.2
-        )
       })
       .on('mouseleave', () => {
+        if (!isMobile) {
+          // Hide tooltip
+          setTooltip(null)
+
+          // Restore all nodes
+          node
+            .transition()
+            .duration(200)
+            .style('opacity', 1)
+
+          // Restore all edges
+          link
+            .transition()
+            .duration(200)
+            .attr('stroke-opacity', 0.6)
+            .attr('stroke-width', (d) => d.style?.strokeWidth || 2)
+        }
+        
         onNodeHover?.(null)
-        link.attr('stroke-opacity', 0.6)
+      })
+      .on('mousemove', (event, d) => {
+        if (!isMobile && tooltip) {
+          const rect = containerRef.current?.getBoundingClientRect()
+          if (rect) {
+            setTooltip({
+              node: d,
+              x: event.pageX - rect.left,
+              y: event.pageY - rect.top,
+            })
+          }
+        }
       })
 
     // Position nodes based on their position property
@@ -471,17 +535,98 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
 
   return (
     <div ref={containerRef} className={`relative w-full h-full ${className}`}>
-      {/* Zoom Controls - Desktop Only */}
+      {/* Desktop Tooltip */}
+      {!isMobile && tooltip && (
+        <div
+          className="absolute z-50 pointer-events-none"
+          style={{
+            left: `${tooltip.x + 15}px`,
+            top: `${tooltip.y - 10}px`,
+            transform: 'translateY(-100%)',
+          }}
+        >
+          <div className="bg-gray-900 text-white text-xs rounded-lg shadow-xl px-3 py-2 max-w-xs">
+            {/* Node Type Badge */}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="inline-block px-2 py-0.5 bg-white/20 rounded text-[10px] font-medium">
+                {tooltip.node.type === 'objective' ? 'Objective' : tooltip.node.type === 'keyResult' ? 'Key Result' : 'User'}
+              </span>
+              {tooltip.node.data.status && (
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+                    tooltip.node.data.status === 'on-track'
+                      ? 'bg-green-500/80'
+                      : tooltip.node.data.status === 'at-risk'
+                      ? 'bg-yellow-500/80'
+                      : 'bg-red-500/80'
+                  }`}
+                >
+                  {tooltip.node.data.status}
+                </span>
+              )}
+            </div>
+
+            {/* Node Label */}
+            <div className="font-semibold mb-1">{tooltip.node.label}</div>
+
+            {/* Progress */}
+            {tooltip.node.data.progress !== undefined && (
+              <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 bg-white/20 rounded-full h-1.5">
+                  <div
+                    className="bg-green-400 h-1.5 rounded-full transition-all"
+                    style={{ width: `${tooltip.node.data.progress}%` }}
+                  />
+                </div>
+                <span className="text-[11px] font-medium">{tooltip.node.data.progress}%</span>
+              </div>
+            )}
+
+            {/* Owner */}
+            {tooltip.node.data.owner && (
+              <div className="text-[11px] text-gray-300">
+                👤 {tooltip.node.data.owner.full_name || tooltip.node.data.owner.email}
+              </div>
+            )}
+
+            {/* Target */}
+            {tooltip.node.data.target && (
+              <div className="text-[11px] text-gray-300">
+                🎯 {tooltip.node.data.target} {tooltip.node.data.unit || ''}
+              </div>
+            )}
+
+            {/* Due Date */}
+            {tooltip.node.data.due_date && (
+              <div className="text-[11px] text-gray-300">
+                📅 {new Date(tooltip.node.data.due_date).toLocaleDateString('vi-VN')}
+              </div>
+            )}
+
+            {/* Arrow */}
+            <div
+              className="absolute top-full left-4 w-0 h-0"
+              style={{
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid #111827',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Zoom Controls - Desktop Only - Compact Group */}
       {!isMobile && (
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1 bg-white rounded-lg shadow-lg p-1.5 border border-gray-200">
           <button
             onClick={handleZoomIn}
-            className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
-            title="Zoom In"
+            className="p-1.5 hover:bg-blue-50 rounded transition-colors group"
+            title="Phóng to (Ctrl/⌘ +)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
+              className="h-4 w-4 text-gray-700 group-hover:text-blue-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -493,19 +638,18 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Phóng to (Ctrl/⌘ +)
-            </span>
           </button>
+          
+          <div className="w-px h-4 bg-gray-300" />
           
           <button
             onClick={handleZoomOut}
-            className="p-2 hover:bg-blue-50 rounded transition-colors group relative"
-            title="Zoom Out"
+            className="p-1.5 hover:bg-blue-50 rounded transition-colors group"
+            title="Thu nhỏ (Ctrl/⌘ -)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-700 group-hover:text-blue-600"
+              className="h-4 w-4 text-gray-700 group-hover:text-blue-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -517,21 +661,18 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
                 d="M20 12H4"
               />
             </svg>
-            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Thu nhỏ (Ctrl/⌘ -)
-            </span>
           </button>
 
-          <div className="border-t border-gray-200 my-1"></div>
+          <div className="w-px h-4 bg-gray-300" />
 
           <button
             onClick={handleResetZoom}
-            className="p-2 hover:bg-green-50 rounded transition-colors group relative"
-            title="Reset View"
+            className="p-1.5 hover:bg-green-50 rounded transition-colors group"
+            title="Đặt lại (Ctrl/⌘ 0)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-700 group-hover:text-green-600"
+              className="h-4 w-4 text-gray-700 group-hover:text-green-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -543,9 +684,6 @@ export const OKRNetworkMap: React.FC<OKRNetworkMapProps> = ({
                 d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
               />
             </svg>
-            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Đặt lại (Ctrl/⌘ 0)
-            </span>
           </button>
         </div>
       )}
