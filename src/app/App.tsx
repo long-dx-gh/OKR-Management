@@ -1,12 +1,15 @@
 import { useState, useMemo, useCallback, memo } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
+import { MobileHeader } from '../components/layout/MobileHeader';
 import { OKRList } from '../components/okr/OKRList';
 import { OKRDetail } from '../components/okr/OKRDetail';
+import { MobileOKRDetail } from '../components/okr/MobileOKRDetail';
 import ActivityFeed from '../components/dashboard/ActivityFeed';
 import AnalyticsDashboard from '../components/dashboard/AnalyticsDashboard';
 import { ToastContainer } from '../components/shared/ToastContainer';
 import { useOptimisticObjectives } from '../hooks/useOptimisticObjectives';
 import { useToast } from '../hooks/useToast';
+import { useResponsive } from '../hooks/useMediaQuery';
 
 export interface KeyResult {
   id: string;
@@ -36,6 +39,9 @@ export default function App() {
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'board' | 'analytics'>('list');
   const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const { isMobile } = useResponsive();
 
   // Use optimistic updates hook
   const {
@@ -117,7 +123,11 @@ export default function App() {
 
   const handleSelectObjective = useCallback((objective: Objective) => {
     setSelectedObjectiveId(objective.id);
-  }, []);
+    // On mobile, we'll show the detail in a modal, so close the sidebar
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   // Show initial loading state only
   if (initialLoading) {
@@ -152,18 +162,30 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-[#f9fafb]">
+    <div className="flex h-screen bg-[#f9fafb] overflow-hidden">
+      {/* Mobile Header */}
+      <MobileHeader 
+        onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        isMenuOpen={isSidebarOpen}
+      />
+
+      {/* Sidebar */}
       <MemoizedSidebar 
         view={view} 
         setView={setView}
         showActivityFeed={showActivityFeed}
         setShowActivityFeed={setShowActivityFeed}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
+
       {/* V1 Feature #2: Analytics View */}
       {view === 'analytics' ? (
-        <AnalyticsDashboard />
+        <div className={`flex-1 overflow-auto ${isMobile ? 'pt-14' : ''}`}>
+          <AnalyticsDashboard />
+        </div>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
+        <div className={`flex flex-1 overflow-hidden ${isMobile ? 'flex-col' : ''}`}>
           <OKRList
             objectives={objectives}
             selectedObjective={selectedObjective}
@@ -172,7 +194,8 @@ export default function App() {
             view={view}
           />
           
-          {selectedObjective && (
+          {/* Desktop: Side-by-side detail panel */}
+          {selectedObjective && !isMobile && (
             <OKRDetail
               key={selectedObjective.id}
               objective={selectedObjective}
@@ -181,8 +204,18 @@ export default function App() {
             />
           )}
 
-          {/* V1 Feature #1: Activity Feed Panel */}
-          {showActivityFeed && (
+          {/* Mobile: Full-screen modal for detail */}
+          {selectedObjective && isMobile && (
+            <MobileOKRDetail
+              objective={selectedObjective}
+              onUpdate={handleUpdateObjective}
+              onDelete={handleDeleteObjective}
+              onClose={() => setSelectedObjectiveId(null)}
+            />
+          )}
+
+          {/* V1 Feature #1: Activity Feed Panel - Hidden on mobile */}
+          {showActivityFeed && !isMobile && (
             <div className="w-80 border-l border-gray-200 bg-white overflow-hidden">
               <ActivityFeed limit={50} className="h-full" />
             </div>

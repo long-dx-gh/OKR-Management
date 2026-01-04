@@ -4,6 +4,7 @@ import { Objective } from '../../app/App';
 import { OKRCard } from './OKRCard';
 import { AddObjectiveModal } from '../modals/AddObjectiveModal';
 import { KanbanBoard } from '../kanban/KanbanBoard';
+import { useResponsive } from '../../hooks/useMediaQuery';
 
 type SortField = 'dueDate' | 'progress' | 'title';
 type SortDirection = 'asc' | 'desc';
@@ -27,6 +28,8 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
   const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
     return (localStorage.getItem('okr-sort-direction') as SortDirection) || 'asc';
   });
+
+  const { isMobile } = useResponsive();
 
   // Persist sort preferences to localStorage
   useEffect(() => {
@@ -94,17 +97,21 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
   }
 
   return (
-    <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+    <div className={`
+      ${isMobile ? 'w-full' : 'w-96'} 
+      bg-white border-r border-gray-200 flex flex-col
+      ${isMobile ? 'pt-14' : ''}
+    `}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-gray-900">Objectives</h2>
+      <div className={`px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-200`}>
+        <div className="flex items-center justify-between mb-3 lg:mb-4">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Objectives</h2>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 active:bg-purple-800 transition-colors touch-manipulation"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-sm">Thêm mới</span>
+            <span className="text-sm font-medium">Thêm mới</span>
           </button>
         </div>
 
@@ -116,17 +123,17 @@ export function OKRList({ objectives, selectedObjective, onSelectObjective, onAd
             placeholder="Tìm kiếm objectives..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 lg:py-2 text-base lg:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation"
           />
         </div>
 
         {/* Filter Tabs - Combined Status and Completion */}
         <div className="mt-3">
           {/* Status Filter */}
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-1.5 lg:gap-2 mb-2 overflow-x-auto pb-1">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+              className={`px-2.5 lg:px-3 py-1.5 lg:py-1 rounded-full text-xs whitespace-nowrap transition-colors touch-manipulation ${
                 filterStatus === 'all'
                   ? 'bg-gray-900 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

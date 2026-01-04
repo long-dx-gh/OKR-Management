@@ -6,6 +6,7 @@ import { AddKeyResultModal } from '../modals/AddKeyResultModal';
 import CommentSection from '../comments/CommentSection';
 import { deleteObjective, updateObjective, subscribeToKeyResults } from '../../services/okr.service';
 import { useOptimisticKeyResults } from '../../hooks/useOptimisticKeyResults';
+import { useResponsive } from '../../hooks/useMediaQuery';
 
 interface OKRDetailProps {
   objective: Objective;
@@ -20,6 +21,8 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedTitle, setEditedTitle] = useState(objective.title);
   const [editedDescription, setEditedDescription] = useState(objective.description);
+
+  const { isMobile } = useResponsive();
 
   // Use optimistic key results hook
   const { createKeyResult, updateKeyResult, deleteKeyResult } = useOptimisticKeyResults({
@@ -187,13 +190,13 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
   
   return (
     <div className="flex-1 bg-white overflow-y-auto">
-      <div className="max-w-4xl mx-auto p-8">
+      <div className={`max-w-4xl mx-auto ${isMobile ? 'p-4' : 'p-8'}`}>
         {/* Header */}
-        <div className="mb-8">
+        <div className={`${isMobile ? 'mb-6' : 'mb-8'}`}>
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${status.color} text-white`}>
+              <div className="flex items-center gap-2 lg:gap-3 mb-3 flex-wrap">
+                <span className={`inline-flex items-center px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-full text-xs lg:text-sm font-medium ${status.color} text-white`}>
                   {status.label}
                 </span>
                 <div className="relative">
@@ -202,20 +205,28 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
                       e.stopPropagation();
                       setShowMenu(!showMenu);
                     }}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="p-1.5 lg:p-1 hover:bg-gray-100 active:bg-gray-200 rounded touch-manipulation"
                   >
                     <MoreVertical className="w-5 h-5 text-gray-400" />
                   </button>
                   {showMenu && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus('on-track');
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <>
+                      {/* Mobile overlay */}
+                      {isMobile && (
+                        <div 
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowMenu(false)}
+                        />
+                      )}
+                      <div className={`absolute ${isMobile ? 'top-full right-0' : 'top-full left-0'} mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 min-w-[160px]`}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            changeStatus('on-track');
+                          }}
+                          className="w-full px-4 py-2.5 lg:py-2 text-left text-sm hover:bg-gray-50 active:bg-gray-100 flex items-center gap-2 touch-manipulation"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
                         Đúng tiến độ
                       </button>
                       <button
@@ -223,7 +234,7 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
                           e.stopPropagation();
                           changeStatus('at-risk');
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        className="w-full px-4 py-2.5 lg:py-2 text-left text-sm hover:bg-gray-50 active:bg-gray-100 flex items-center gap-2 touch-manipulation"
                       >
                         <div className="w-2 h-2 rounded-full bg-yellow-500" />
                         Có rủi ro
@@ -233,7 +244,7 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
                           e.stopPropagation();
                           changeStatus('off-track');
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        className="w-full px-4 py-2.5 lg:py-2 text-left text-sm hover:bg-gray-50 active:bg-gray-100 flex items-center gap-2 touch-manipulation"
                       >
                         <div className="w-2 h-2 rounded-full bg-red-500" />
                         Lệch tiến độ
@@ -241,12 +252,13 @@ export function OKRDetail({ objective, onUpdate, onDelete }: OKRDetailProps) {
                       <div className="border-t border-gray-200 my-1" />
                       <button
                         onClick={handleDelete}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="w-full px-4 py-2.5 lg:py-2 text-left text-sm text-red-600 hover:bg-red-50 active:bg-red-100 flex items-center gap-2 touch-manipulation"
                       >
                         <Trash2 className="w-4 h-4" />
                         Xóa
                       </button>
                     </div>
+                    </>
                   )}
                 </div>
               </div>

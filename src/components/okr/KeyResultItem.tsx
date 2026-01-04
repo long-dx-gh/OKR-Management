@@ -114,61 +114,63 @@ export function KeyResultItem({ keyResult, onUpdate, onDelete }: KeyResultItemPr
   };
 
   return (
-    <div className="p-5 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
+    <div className="p-4 lg:p-5 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+      <div className="flex items-start justify-between mb-3 lg:mb-4">
+        <div className="flex-1 min-w-0">
           {isEditingInfo ? (
-            <div className="mb-3">
+            <div className="mb-3 space-y-2">
               <input
                 type="text"
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                className="w-full px-3 py-2.5 lg:py-2 text-sm lg:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 touch-manipulation"
                 placeholder="Tiêu đề Key Result"
                 autoFocus
               />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-600">Target:</span>
                 <input
                   type="number"
                   value={editedTarget}
                   onChange={(e) => setEditedTarget(e.target.value)}
-                  className="w-32 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-28 lg:w-32 px-3 py-2 lg:py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 touch-manipulation"
                   step="0.1"
                   min="0"
                 />
-                <span className="text-gray-600">{keyResult.unit}</span>
-                <button
-                  onClick={handleSaveInfo}
-                  className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-                  title="Lưu thay đổi"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleCancelEditInfo}
-                  className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                  title="Hủy"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <span className="text-sm text-gray-600">{keyResult.unit}</span>
+                <div className="flex gap-1 ml-auto">
+                  <button
+                    onClick={handleSaveInfo}
+                    className="p-2 lg:p-1.5 text-green-600 hover:bg-green-50 active:bg-green-100 rounded transition-colors touch-manipulation"
+                    title="Lưu thay đổi"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelEditInfo}
+                    className="p-2 lg:p-1.5 text-red-600 hover:bg-red-50 active:bg-red-100 rounded transition-colors touch-manipulation"
+                    title="Hủy"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
             <div className="group">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-gray-900">{keyResult.title}</h3>
+                <h3 className="text-sm lg:text-base font-medium text-gray-900 line-clamp-2">{keyResult.title}</h3>
                 <button
                   onClick={handleEditInfo}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 lg:p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 active:bg-purple-100 rounded transition-all touch-manipulation flex-shrink-0"
                   title="Sửa thông tin"
                 >
-                  <Edit2 className="w-3.5 h-3.5" />
+                  <Edit2 className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
                 </button>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-3 lg:gap-4 text-xs lg:text-sm text-gray-500 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  <User className="w-4 h-4" />
+                  <User className="w-4 h-4 flex-shrink-0" />
                   <span>{keyResult.owner}</span>
                 </div>
                 <div className="flex items-center gap-1.5">

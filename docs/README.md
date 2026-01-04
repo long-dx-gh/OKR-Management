@@ -5,12 +5,15 @@
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=for-the-badge)](https://long-dx-gh.github.io/OKR-Management/)
 [![GitHub Pages](https://img.shields.io/badge/Deployed%20on-GitHub%20Pages-blue?style=for-the-badge&logo=github)](https://long-dx-gh.github.io/OKR-Management/)
 [![Supabase](https://img.shields.io/badge/Backend-Supabase-green?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Mobile Responsive](https://img.shields.io/badge/Mobile-Responsive-orange?style=for-the-badge)](https://long-dx-gh.github.io/OKR-Management/)
 
 ---
 
 ## 🚀 Live Demo
 
 **Try it now**: [https://long-dx-gh.github.io/OKR-Management/](https://long-dx-gh.github.io/OKR-Management/)
+
+**📱 Fully Responsive** - Works perfectly on Desktop, Tablet & Mobile!
 
 ---
 
@@ -26,6 +29,14 @@
 - ✅ Real-time updates across all users
 - ✅ Multi-user support with Supabase
 - ✅ Instant synchronization
+
+### 📱 **Mobile-First Design** ✨ NEW
+- ✅ **Fully responsive** on all devices
+- ✅ **Touch-optimized** UI with 44px+ touch targets
+- ✅ **Mobile header** with hamburger menu
+- ✅ **Slide-out sidebar** with smooth animations
+- ✅ **Full-screen modals** on mobile
+- ✅ **Desktop experience preserved** 100%
 
 ### 🎨 **Modern UI/UX**
 - ✅ Beautiful, responsive design with Tailwind CSS
